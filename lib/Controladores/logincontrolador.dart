@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AuthService {
   final CollectionReference usuarios = FirebaseFirestore.instance.collection('usuarios');
 
-  // Función para verificar el inicio de sesión
-  Future<bool> verificarUsuario(String username, String password) async {
+  // Función para verificar el inicio de sesión y ejecutar una acción en caso de éxito
+  Future<bool> verificarUsuario(String username, String password, Function onSuccess) async {
     try {
       // Consulta el documento donde el campo 'username' coincide con el ingresado
       QuerySnapshot querySnapshot = await usuarios.where('username', isEqualTo: username).limit(1).get();
@@ -21,6 +21,7 @@ class AuthService {
 
       if (storedPassword == password) {
         print("Inicio de sesión exitoso");
+        onSuccess(); // Llamada al callback en caso de éxito
         return true;
       } else {
         print("Contraseña incorrecta");
