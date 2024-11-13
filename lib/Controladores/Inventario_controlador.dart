@@ -1,60 +1,53 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class InventoryService {
   final CollectionReference productos = FirebaseFirestore.instance.collection('productos');
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-
-  // Función para seleccionar una imagen desde el dispositivo
-  Future<File?> seleccionarImagen() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    return pickedFile != null ? File(pickedFile.path) : null;
-  }
-
-  // Función para subir la imagen a Firebase Storage y obtener la URL
-  Future<String?> subirImagen(File image) async {
-    try {
-      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      Reference ref = _storage.ref().child('productos/$fileName');
-      
-      // Espera a que la imagen se suba a Firebase Storage
-      await ref.putFile(image);
-      
-      // Obtén la URL de descarga
-      String downloadUrl = await ref.getDownloadURL();
-      return downloadUrl;
-    } catch (e) {
-      print("Error al subir imagen: $e");
-      return null;
-    }
-  }
 
   // Función para agregar un nuevo producto a Firestore
   Future<void> agregarProducto({
     required String nombre,
     required double precio,
-    File? imagen,
+    String? imageUrl,
   }) async {
     try {
-      String? imageUrl;
-      
-      // Solo intenta subir la imagen si fue seleccionada
-      if (imagen != null) {
-        imageUrl = await subirImagen(imagen);
-      }
-
-      // Asegúrate de que imageUrl no sea null antes de guardar
       await productos.add({
         'Nombre': nombre,
         'precio': precio,
         'id': await _obtenerNuevoId(),
-        'imagen': imageUrl ?? 'https://via.placeholder.com/150', // Usa la URL obtenida o una URL por defecto
+        'imagen': imageUrl ?? 'https://via.placeholder.com/150', // Usa la URL proporcionada o una URL por defecto
       });
       print("Producto agregado exitosamente con imagen.");
     } catch (e) {
       print("Error al agregar producto: $e");
+    }
+  }
+
+  // Función para editar un producto en Firestore
+  Future<void> editarProducto({
+    required String id,
+    required String nombre,
+    required double precio,
+    String? imageUrl,
+  }) async {
+    try {
+      await productos.doc(id).update({
+        'Nombre': nombre,
+        'precio': precio,
+        'imagen': imageUrl,
+      });
+      print("Producto editado exitosamente.");
+    } catch (e) {
+      print("Error al editar producto: $e");
+    }
+  }
+
+  // Función para eliminar un producto de Firestore
+  Future<void> eliminarProducto(String id) async {
+    try {
+      await productos.doc(id).delete();
+      print("Producto eliminado exitosamente.");
+    } catch (e) {
+      print("Error al eliminar producto: $e");
     }
   }
 
@@ -73,7 +66,11 @@ class InventoryService {
   Future<List<Map<String, dynamic>>> obtenerProductos() async {
     try {
       QuerySnapshot snapshot = await productos.get();
-      return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Añade el ID del documento al mapa
+        return data;
+      }).toList();
     } catch (e) {
       print("Error al obtener productos: $e");
       return [];
