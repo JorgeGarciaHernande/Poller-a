@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/Controladores/Ventascontrolador.dart'; 
+import '/Controladores/Ventascontrolador.dart';
 
 class VentaPage extends StatefulWidget {
   const VentaPage({super.key});
@@ -9,47 +9,57 @@ class VentaPage extends StatefulWidget {
 }
 
 class _VentaPageState extends State<VentaPage> {
-  final VentaService _ventaService = VentaService();
-  
-  // Lista de productos para la venta (se puede reemplazar con datos reales)
-  final List<Map<String, dynamic>> _productos = [
-    {'id': '1', 'nombre': 'Platillo 1', 'precio': 50.0, 'imagen': 'https://via.placeholder.com/150'},
-    {'id': '2', 'nombre': 'Platillo 2', 'precio': 60.0, 'imagen': 'https://via.placeholder.com/150'},
-    {'id': '3', 'nombre': 'Platillo 3', 'precio': 40.0, 'imagen': 'https://via.placeholder.com/150'},
-    {'id': '4', 'nombre': 'Platillo 4', 'precio': 30.0, 'imagen': 'https://via.placeholder.com/150'},
-  ];
+  final VentaController _ventaController = VentaController();
+  List<Map<String, dynamic>> _productosInventario = [];
+  List<Map<String, dynamic>> _carrito = [];
 
-  String? _productoSeleccionado;
-  int _cantidad = 1;
-  double _precio = 0.0;
+  @override
+  void initState() {
+    super.initState();
+    _cargarProductosDesdeInventario();
+  }
 
-  // Función para abrir el cuadro de diálogo para ingresar cantidad y proceder con la venta
-  Future<void> _abrirDialogoVenta(Map<String, dynamic> producto) async {
-    _productoSeleccionado = producto['nombre'];
-    _precio = producto['precio'];
+  Future<void> _cargarProductosDesdeInventario() async {
+    List<Map<String, dynamic>> productos = await _ventaController.obtenerProductosDesdeInventario();
+    setState(() {
+      _productosInventario = productos;
+    });
+  }
+
+  Future<void> _confirmarVenta() async {
+    await _ventaController.confirmarVenta();
+    setState(() {
+      _carrito.clear(); // Vaciar el carrito después de confirmar la venta
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Venta confirmada exitosamente')),
+    );
+  }
+
+  void _agregarAlCarrito(Map<String, dynamic> producto) {
+    final TextEditingController cantidadController = TextEditingController();
+    final TextEditingController notaController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Realizar Venta'),
+        title: Text('Agregar ${producto['Nombre']} al carrito'),
         content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Producto: ${producto['nombre']}'),
-            const SizedBox(height: 8),
-            Text('Precio: \$${producto['precio'].toStringAsFixed(2)}'),
-            const SizedBox(height: 8),
-            // Campo para ingresar cantidad
             TextField(
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                setState(() {
-                  _cantidad = int.tryParse(value) ?? 1;
-                });
-              },
+              controller: cantidadController,
               decoration: const InputDecoration(
                 labelText: 'Cantidad',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: notaController,
+              decoration: const InputDecoration(
+                labelText: 'Nota (opcional)',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -57,29 +67,37 @@ class _VentaPageState extends State<VentaPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () async {
-              // Lógica para agregar la venta
-              if (_productoSeleccionado != null && _cantidad > 0) {
-                await _ventaService.agregarVenta(
-                  nombreProducto: producto['nombre'],
-                  precioProducto: producto['precio'],
-                  cantidad: _cantidad,
-                  idProducto: producto['id'],
-                  nota: 'Venta realizada',
-                );
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Venta realizada con éxito')),
-                );
-              }
+            onPressed: () {
+              Navigator.pop(context);
             },
-            child: const Text('Confirmar Venta'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              int cantidad = int.tryParse(cantidadController.text) ?? 1;
+              String nota = notaController.text.trim();
+
+              if (cantidad > 0) {
+                setState(() {
+                  _ventaController.agregarProductoTemporal(
+                    idProducto: producto['id'],
+                    nombreProducto: producto['Nombre'],
+                    precioProducto: producto['precio'],
+                    cantidad: cantidad,
+                    nota: nota,
+                  );
+                  _carrito.add({
+                    'idProducto': producto['id'],
+                    'nombreProducto': producto['Nombre'],
+                    'precioProducto': producto['precio'],
+                    'cantidad': cantidad,
+                    'nota': nota,
+                  });
+                });
+              }
+              Navigator.pop(context);
             },
-            child: const Text('Cancelar'),
+            child: const Text('Agregar'),
           ),
         ],
       ),
@@ -90,68 +108,94 @@ class _VentaPageState extends State<VentaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ventas'),
+        title: const Text('Realizar Venta'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            // Botón para realizar la venta (aún no tiene lógica)
-            ElevatedButton(
-              onPressed: () {
-                // Lógica para realizar la venta
-              },
-              child: const Text('Realizar Venta'),
-            ),
-            const SizedBox(height: 16),
-
-            // Cuadrícula de productos (platillos)
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.8,
-                ),
-                itemCount: _productos.length,
-                itemBuilder: (context, index) {
-                  final producto = _productos[index];
-                  return GestureDetector(
-                    onTap: () {
-                      _abrirDialogoVenta(producto);
+      body: Column(
+        children: [
+          // Lista de productos del inventario
+          Expanded(
+            flex: 2,
+            child: _productosInventario.isNotEmpty
+                ? ListView.builder(
+                    itemCount: _productosInventario.length,
+                    itemBuilder: (context, index) {
+                      final producto = _productosInventario[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          leading: Image.network(
+                            producto['imagen'] ?? 'https://via.placeholder.com/150',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                          title: Text(producto['Nombre']),
+                          subtitle: Text('\$${producto['precio'].toStringAsFixed(2)}'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.add_shopping_cart),
+                            onPressed: () {
+                              _agregarAlCarrito(producto);
+                            },
+                          ),
+                        ),
+                      );
                     },
-                    child: Card(
-                      color: Colors.yellow.shade200, // Color de fondo amarillo
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Image.network(
-                              producto['imagen'],
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            producto['nombre'],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            '\$${producto['precio'].toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.green),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  )
+                : const Center(child: CircularProgressIndicator()),
+          ),
+          const Divider(),
+          // Carrito de compras
+          Expanded(
+            flex: 1,
+            child: Column(
+              children: [
+                const Text(
+                  'Carrito',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Expanded(
+                  child: _carrito.isNotEmpty
+                      ? ListView.builder(
+                          itemCount: _carrito.length,
+                          itemBuilder: (context, index) {
+                            final producto = _carrito[index];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              child: ListTile(
+                                title: Text(producto['nombreProducto']),
+                                subtitle: Text(
+                                  'Cantidad: ${producto['cantidad']}\nNota: ${producto['nota'].isEmpty ? "Sin nota" : producto['nota']}',
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      _ventaController.eliminarProductoTemporal(index);
+                                      _carrito.removeAt(index);
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : const Center(child: Text('Carrito vacío')),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Botón para confirmar la venta
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: _carrito.isNotEmpty
+                  ? _confirmarVenta
+                  : null, // Deshabilitar si el carrito está vacío
+              child: const Text('Confirmar Venta'),
+            ),
+          ),
+        ],
       ),
     );
   }
