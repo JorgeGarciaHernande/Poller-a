@@ -1,6 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 class DispositivosService {
   final CollectionReference dispositivos = FirebaseFirestore.instance.collection('dispositivos_autorizados');
@@ -14,7 +12,7 @@ class DispositivosService {
         return data;
       }).toList();
     } catch (e) {
-      print("Error al obtener dispositivos: $e");
+      print("Error al obtener dispositivs: $e");
       return [];
     }
   }
@@ -53,13 +51,5 @@ class DispositivosService {
       print("Error al eliminar dispositivo: $e");
     }
   }
-
-  // Generar un QR con el enlace de descarga de la aplicación
-  Widget generarQrParaDescarga(String appLink) {
-    return QrImageView(
-      data: appLink,
-      version: QrVersions.auto,
-      size: 200.0,
-    );
-  }
+  
 }
