@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '/Controladores/Inventario_controlador.dart';
+import '/Controladores/Inventario_controlador.dart'; // Asegúrate de que la ruta sea correcta
+import 'Ventas.dart'; // Importa la vista de ventas
 
 class InventarioPage extends StatefulWidget {
   const InventarioPage({super.key});
@@ -156,6 +157,17 @@ class _InventarioPageState extends State<InventarioPage> {
               child: const Text('Añadir Producto'),
             ),
             const SizedBox(height: 16),
+            // Botón para navegar a la vista de ventas
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const VentaPage()), // Navega a la vista de ventas
+                );
+              },
+              child: const Text('Ir a Ventas'),
+            ),
+            const SizedBox(height: 16),
             // Cuadrícula de productos
             Expanded(
               child: _items.isNotEmpty
@@ -213,3 +225,4 @@ class _InventarioPageState extends State<InventarioPage> {
     );
   }
 }
+

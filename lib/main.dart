@@ -1,46 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
-import 'Vistas/loginview.dart';
+import 'Controladores/AuthService.dart';
+import 'Vistas/Menu.dart'; // Asegúrate de tener esta vista creada
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
-  // Llama a la función para crear la colección 'productos' si no existe
-  await verificarOCrearColeccionProductos();
-  
-  runApp(const MainApp());
-}
 
-// Función para verificar y crear la colección 'productos' si está vacía
-Future<void> verificarOCrearColeccionProductos() async {
-  CollectionReference productos = FirebaseFirestore.instance.collection('productos');
+  // Verificar si el dispositivo está autorizado
+  bool autorizado = await verificarOCrearDispositivo();
 
-  // Verifica si la colección 'productos' ya tiene documentos
-  QuerySnapshot querySnapshot = await productos.limit(1).get();
-  if (querySnapshot.docs.isEmpty) {
-    // Si la colección está vacía, agrega un producto inicial con imagen de marcador de posición
-    await productos.add({
-      'Nombre': 'Producto de Ejemplo',
-      'precio': 0.0,
-      'id': 1,
-      'imagen': 'https://via.placeholder.com/150' // URL de marcador de posición
-    });
-    print("Colección 'productos' creada con un documento inicial y campo de imagen.");
-  } else {
-    print("La colección 'productos' ya existe.");
-  }
+  runApp(MainApp(autorizado: autorizado));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  final bool autorizado;
+
+  const MainApp({super.key, required this.autorizado});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: LoginPage(), // Llama a la pantalla de inicio de sesión
+    return MaterialApp(
+      home: autorizado
+          ? const Menu() // Cambiado a la clase Menu
+          : const Scaffold(
+              body: Center(
+                child: Text(
+                  "Dispositivo no autorizado",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ), // Si no está autorizado, muestra un mensaje de error
     );
   }
+}
+
+// Función para verificar o crear el dispositivo en Firestore
+Future<bool> verificarOCrearDispositivo() async {
+  final AuthService authService = AuthService();
+  String deviceId = await authService.getOrCreateDeviceId();
+  return await authService.verificarAutorizacion(deviceId);
 }
