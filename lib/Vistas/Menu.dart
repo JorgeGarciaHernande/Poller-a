@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '/Vistas/Ventas.dart'; // Asegúrate de tener esta vista creada
 import '/Vistas/Dispositivos.dart'; // Asegúrate de tener esta vista creada
-import '/Vistas/Inventario.dart';
+import '/Vistas/Inventario.dart'; // Asegúrate de tener esta vista creada
+import '/Vistas/Reportesvista.dart'; // Asegúrate de tener esta vista creada
 
 class Menu extends StatelessWidget {
   const Menu({super.key});
@@ -48,6 +49,17 @@ class Menu extends StatelessWidget {
                 );
               },
               child: const Text('Inventario'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Navegar a la vista de Reportes
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ReportePage()),
+                );
+              },
+              child: const Text('Reportes'),
             ),
           ],
         ),

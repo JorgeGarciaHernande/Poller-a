@@ -52,18 +52,40 @@ class VentaController {
   /// Confirmar y registrar la venta en Firestore
   Future<void> confirmarVenta() async {
     try {
+      List<String> nombresProductos = [];
+      double totalVenta = 0;
+      String notaGeneral = ""; // Variable para almacenar las notas concatenadas
+
       for (var producto in _productosSeleccionados) {
-        double totalVenta = producto['precioProducto'] * producto['cantidad'];
+        double subtotal = producto['precioProducto'] * producto['cantidad'];
+        nombresProductos.add(producto['nombreProducto']);
+        totalVenta += subtotal;
+
+        // Concatenar la nota del producto a la nota general
+        if (producto['nota'] != null && producto['nota'].isNotEmpty) {
+          notaGeneral += "${producto['nombreProducto']}: ${producto['nota']} \n";
+        }
+
+        // Registrar producto individual en Firestore
         await ventas.add({
           'idProducto': producto['idProducto'],
           'nombreProducto': producto['nombreProducto'],
           'precioProducto': producto['precioProducto'],
           'cantidad': producto['cantidad'],
-          'totalVenta': totalVenta,
+          'totalVenta': subtotal,
           'nota': producto['nota'],
           'fecha': FieldValue.serverTimestamp(), // Fecha de la venta
         });
       }
+
+      // Registrar carrito completo en Firestore
+      await ventas.add({
+        'carrito': nombresProductos,
+        'total': totalVenta,
+        'notaGeneral': notaGeneral.trim(), // Eliminar espacios o saltos de línea innecesarios
+        'fecha': FieldValue.serverTimestamp(), // Fecha de la venta
+      });
+
       _productosSeleccionados.clear(); // Limpiar el carrito
       print("Venta confirmada y registrada exitosamente.");
     } catch (e) {
@@ -132,31 +154,6 @@ class VentaController {
     } catch (e) {
       print("Error al obtener resumen de ventas: $e");
       return 0.0;
-    }
-  }
-
-  /// Actualizar stock en el inventario después de una venta
-  Future<void> actualizarInventario(String idProducto, int cantidadVendida) async {
-    try {
-      DocumentSnapshot snapshot = await inventario.doc(idProducto).get();
-      if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>;
-        int stockActual = data['stock'] ?? 0;
-
-        // Actualizar stock solo si hay suficiente inventario
-        if (stockActual >= cantidadVendida) {
-          await inventario.doc(idProducto).update({
-            'stock': stockActual - cantidadVendida,
-          });
-          print("Inventario actualizado para el producto $idProducto.");
-        } else {
-          print("Stock insuficiente para el producto $idProducto.");
-        }
-      } else {
-        print("Producto con ID $idProducto no encontrado en el inventario.");
-      }
-    } catch (e) {
-      print("Error al actualizar inventario: $e");
     }
   }
 }

@@ -3,88 +3,75 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ReporteController {
   final CollectionReference ventas = FirebaseFirestore.instance.collection('ventas');
 
-  /// Obtener ventas del día
-  Future<List<Map<String, dynamic>>> obtenerVentasDelDia() async {
+  /// Obtener total de ventas diarias
+  Future<double> obtenerTotalVentasDiarias() async {
     try {
       DateTime now = DateTime.now();
-      DateTime inicioDia = DateTime(now.year, now.month, now.day);
+      DateTime inicioDelDia = DateTime(now.year, now.month, now.day);
       QuerySnapshot snapshot = await ventas
-          .where('fecha', isGreaterThanOrEqualTo: inicioDia)
-          .where('fecha', isLessThan: inicioDia.add(const Duration(days: 1)))
+          .where('fecha', isGreaterThanOrEqualTo: inicioDelDia)
           .get();
 
-      return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return sum + (data['totalVenta'] as double? ?? 0.0);
+      });
+
+      return totalVentas;
     } catch (e) {
-      print("Error al obtener ventas del día: $e");
-      return [];
+      print("Error al obtener total de ventas diarias: $e");
+      return 0.0;
     }
   }
 
-  /// Obtener ventas de la semana
-  Future<List<Map<String, dynamic>>> obtenerVentasDeLaSemana() async {
+  /// Obtener total de ventas semanales
+  Future<double> obtenerTotalVentasSemanales() async {
     try {
       DateTime now = DateTime.now();
-      DateTime inicioSemana = now.subtract(Duration(days: now.weekday - 1));
+      DateTime inicioDeSemana = now.subtract(Duration(days: now.weekday - 1));
       QuerySnapshot snapshot = await ventas
-          .where('fecha', isGreaterThanOrEqualTo: inicioSemana)
-          .where('fecha', isLessThan: inicioSemana.add(const Duration(days: 7)))
+          .where('fecha', isGreaterThanOrEqualTo: inicioDeSemana)
           .get();
 
-      return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return sum + (data['totalVenta'] as double? ?? 0.0);
+      });
+
+      return totalVentas;
     } catch (e) {
-      print("Error al obtener ventas de la semana: $e");
-      return [];
+      print("Error al obtener total de ventas semanales: $e");
+      return 0.0;
     }
   }
 
-  /// Obtener ventas del mes
-  Future<List<Map<String, dynamic>>> obtenerVentasDelMes() async {
+  /// Obtener total de ventas mensuales
+  Future<double> obtenerTotalVentasMensuales() async {
     try {
       DateTime now = DateTime.now();
-      DateTime inicioMes = DateTime(now.year, now.month);
+      DateTime inicioDelMes = DateTime(now.year, now.month, 1);
       QuerySnapshot snapshot = await ventas
-          .where('fecha', isGreaterThanOrEqualTo: inicioMes)
-          .where('fecha', isLessThan: DateTime(now.year, now.month + 1))
+          .where('fecha', isGreaterThanOrEqualTo: inicioDelMes)
           .get();
 
-      return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return sum + (data['totalVenta'] as double? ?? 0.0);
+      });
+
+      return totalVentas;
     } catch (e) {
-      print("Error al obtener ventas del mes: $e");
-      return [];
+      print("Error al obtener total de ventas mensuales: $e");
+      return 0.0;
     }
   }
 
-  /// Calcular total vendido en un periodo de ventas
-  double calcularTotalVendido(List<Map<String, dynamic>> ventas) {
-    return ventas.fold(0.0, (sum, venta) => sum + (venta['totalVenta'] as double));
-  }
-
-  /// Generar datos para representación gráfica
-  Map<String, double> generarDatosGrafica(List<Map<String, dynamic>> ventas) {
-    Map<String, double> datos = {};
-    for (var venta in ventas) {
-      String producto = venta['nombreProducto'] as String;
-      double totalVenta = (venta['totalVenta'] as double);
-
-      if (datos.containsKey(producto)) {
-        datos[producto] = datos[producto]! + totalVenta;
-      } else {
-        datos[producto] = totalVenta;
-      }
-    }
-    return datos;
-  }
-
-  /// Cerrar caja
+  /// Cerrar caja y obtener el total del día
   Future<void> cerrarCaja() async {
     try {
-      List<Map<String, dynamic>> ventasDelDia = await obtenerVentasDelDia();
-      double totalDelDia = calcularTotalVendido(ventasDelDia);
-
-      print("Caja cerrada. Total vendido hoy: \$${totalDelDia.toStringAsFixed(2)}");
-
-      // Puedes agregar aquí la lógica para registrar el cierre de caja
-      // en Firestore o en otro sistema.
+      double total = await obtenerTotalVentasDiarias();
+      print("Caja cerrada. Total del día: \$${total.toStringAsFixed(2)}");
+      // Aquí podrías registrar el total en otra colección si lo necesitas
     } catch (e) {
       print("Error al cerrar caja: $e");
     }
