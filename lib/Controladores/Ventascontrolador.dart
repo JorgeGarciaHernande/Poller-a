@@ -52,35 +52,32 @@ class VentaController {
   /// Confirmar y registrar la venta en Firestore
   Future<void> confirmarVenta() async {
     try {
-      List<String> nombresProductos = [];
+      List<Map<String, dynamic>> carrito = [];
       double totalVenta = 0;
       String notaGeneral = ""; // Variable para almacenar las notas concatenadas
 
       for (var producto in _productosSeleccionados) {
         double subtotal = producto['precioProducto'] * producto['cantidad'];
-        nombresProductos.add(producto['nombreProducto']);
         totalVenta += subtotal;
+
+        carrito.add({
+          'idProducto': producto['idProducto'],
+          'nombreProducto': producto['nombreProducto'],
+          'precioProducto': producto['precioProducto'],
+          'cantidad': producto['cantidad'], // Asegurarse de incluir la cantidad
+          'subtotal': subtotal,
+          'nota': producto['nota'] ?? '',
+        });
 
         // Concatenar la nota del producto a la nota general
         if (producto['nota'] != null && producto['nota'].isNotEmpty) {
           notaGeneral += "${producto['nombreProducto']}: ${producto['nota']} \n";
         }
-
-        // Registrar producto individual en Firestore
-        await ventas.add({
-          'idProducto': producto['idProducto'],
-          'nombreProducto': producto['nombreProducto'],
-          'precioProducto': producto['precioProducto'],
-          'cantidad': producto['cantidad'],
-          'totalVenta': subtotal,
-          'nota': producto['nota'],
-          'fecha': FieldValue.serverTimestamp(), // Fecha de la venta
-        });
       }
 
       // Registrar carrito completo en Firestore
       await ventas.add({
-        'carrito': nombresProductos,
+        'carrito': carrito, // Agregar todos los productos del carrito
         'total': totalVenta,
         'notaGeneral': notaGeneral.trim(), // Eliminar espacios o saltos de línea innecesarios
         'fecha': FieldValue.serverTimestamp(), // Fecha de la venta
@@ -147,7 +144,7 @@ class VentaController {
       QuerySnapshot snapshot = await ventas.get();
       double totalVentas = snapshot.docs.fold(0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return sum + (data['totalVenta'] as double);
+        return sum + (data['total'] as double);
       });
       print("Resumen de ventas obtenido: $totalVentas");
       return totalVentas;
@@ -157,3 +154,4 @@ class VentaController {
     }
   }
 }
+

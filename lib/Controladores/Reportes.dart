@@ -14,7 +14,7 @@ class ReporteController {
 
       double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return sum + (data['totalVenta'] as double? ?? 0.0);
+        return sum + (data['total'] as double? ?? 0.0);
       });
 
       return totalVentas;
@@ -35,7 +35,7 @@ class ReporteController {
 
       double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return sum + (data['totalVenta'] as double? ?? 0.0);
+        return sum + (data['total'] as double? ?? 0.0);
       });
 
       return totalVentas;
@@ -56,13 +56,49 @@ class ReporteController {
 
       double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return sum + (data['totalVenta'] as double? ?? 0.0);
+        return sum + (data['total'] as double? ?? 0.0);
       });
 
       return totalVentas;
     } catch (e) {
       print("Error al obtener total de ventas mensuales: $e");
       return 0.0;
+    }
+  }
+
+  /// Obtener datos para la gráfica
+  Future<List<Map<String, dynamic>>> obtenerDatosParaGrafica() async {
+    try {
+      QuerySnapshot snapshot = await ventas.get();
+
+      // Mapear productos y sus cantidades
+      Map<String, int> conteoProductos = {};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final carrito = data['carrito'] as List<dynamic>;
+
+        for (var producto in carrito) {
+          final nombreProducto = producto['nombreProducto'] as String? ?? 'Desconocido';
+          final cantidad = producto['cantidad'] as int? ?? 0;
+
+          if (conteoProductos.containsKey(nombreProducto)) {
+            conteoProductos[nombreProducto] = conteoProductos[nombreProducto]! + cantidad;
+          } else {
+            conteoProductos[nombreProducto] = cantidad;
+          }
+        }
+      }
+
+      return conteoProductos.entries
+          .map((entry) => {
+                'producto': entry.key,
+                'cantidad': entry.value,
+              })
+          .toList();
+    } catch (e) {
+      print("Error al obtener datos para la gráfica: $e");
+      return [];
     }
   }
 
