@@ -20,87 +20,25 @@ class _VentaPageState extends State<VentaPage> {
   }
 
   Future<void> _cargarProductosDesdeInventario() async {
-    List<Map<String, dynamic>> productos = await _ventaController.obtenerProductosDesdeInventario();
-    setState(() {
-      _productosInventario = productos;
-    });
-  }
-
-  Future<void> _confirmarVenta() async {
-    await _ventaController.confirmarVenta();
-    setState(() {
-      _carrito.clear(); // Vaciar el carrito después de confirmar la venta
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Venta confirmada exitosamente')),
-    );
+    try {
+      List<Map<String, dynamic>> productos =
+          await _ventaController.obtenerProductosDesdeInventario();
+      setState(() {
+        _productosInventario = productos;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar productos: $e')),
+      );
+    }
   }
 
   void _agregarAlCarrito(Map<String, dynamic> producto) {
-    final TextEditingController cantidadController = TextEditingController();
-    final TextEditingController notaController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Agregar ${producto['Nombre']} al carrito'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: cantidadController,
-              decoration: const InputDecoration(
-                labelText: 'Cantidad',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: notaController,
-              decoration: const InputDecoration(
-                labelText: 'Nota (opcional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              int cantidad = int.tryParse(cantidadController.text) ?? 1;
-              String nota = notaController.text.trim();
-
-              if (cantidad > 0) {
-                setState(() {
-                  _ventaController.agregarProductoTemporal(
-                    idProducto: producto['id'],
-                    nombreProducto: producto['Nombre'],
-                    precioProducto: producto['precio'],
-                    cantidad: cantidad,
-                    nota: nota,
-                  );
-                  _carrito.add({
-                    'idProducto': producto['id'],
-                    'nombreProducto': producto['Nombre'],
-                    'precioProducto': producto['precio'],
-                    'cantidad': cantidad,
-                    'nota': nota,
-                  });
-                });
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Agregar'),
-          ),
-        ],
-      ),
+    setState(() {
+      _carrito.add(producto);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${producto['Nombre']} agregado al carrito')),
     );
   }
 
@@ -110,92 +48,88 @@ class _VentaPageState extends State<VentaPage> {
       appBar: AppBar(
         title: const Text('Realizar Venta'),
         centerTitle: true,
+        backgroundColor:
+            const Color.fromARGB(255, 255, 146, 21), // Color de la AppBar
       ),
-      body: Column(
-        children: [
-          // Lista de productos del inventario
-          Expanded(
-            flex: 2,
-            child: _productosInventario.isNotEmpty
-                ? ListView.builder(
-                    itemCount: _productosInventario.length,
-                    itemBuilder: (context, index) {
-                      final producto = _productosInventario[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          leading: Image.network(
-                            producto['imagen'] ?? 'https://via.placeholder.com/150',
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          ),
-                          title: Text(producto['Nombre']),
-                          subtitle: Text('\$${producto['precio'].toStringAsFixed(2)}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.add_shopping_cart),
-                            onPressed: () {
-                              _agregarAlCarrito(producto);
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                : const Center(child: CircularProgressIndicator()),
-          ),
-          const Divider(),
-          // Carrito de compras
-          Expanded(
-            flex: 1,
-            child: Column(
-              children: [
-                const Text(
-                  'Carrito',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Expanded(
-                  child: _carrito.isNotEmpty
-                      ? ListView.builder(
-                          itemCount: _carrito.length,
-                          itemBuilder: (context, index) {
-                            final producto = _carrito[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              child: ListTile(
-                                title: Text(producto['nombreProducto']),
-                                subtitle: Text(
-                                  'Cantidad: ${producto['cantidad']}\nNota: ${producto['nota'].isEmpty ? "Sin nota" : producto['nota']}',
+      body: Container(
+        color: const Color.fromARGB(255, 255, 146, 21), // Fondo naranja claro
+        child: Column(
+          children: [
+            // Productos en formato Grid
+            Expanded(
+              child: _productosInventario.isNotEmpty
+                  ? GridView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2, // Dos columnas
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                        childAspectRatio: 3 / 4,
+                      ),
+                      itemCount: _productosInventario.length,
+                      itemBuilder: (context, index) {
+                        final producto = _productosInventario[index];
+                        return GestureDetector(
+                          onTap: () => _agregarAlCarrito(producto),
+                          child: Card(
+                            elevation: 4.0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(10.0),
+                                    ),
+                                    child: Image.network(
+                                      producto['imagen'] ??
+                                          'https://via.placeholder.com/150',
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                                  ),
                                 ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    setState(() {
-                                      _ventaController.eliminarProductoTemporal(index);
-                                      _carrito.removeAt(index);
-                                    });
-                                  },
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        producto['Nombre'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        '\$${producto['precio'].toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        )
-                      : const Center(child: Text('Carrito vacío')),
-                ),
-              ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : const Center(child: CircularProgressIndicator()),
             ),
-          ),
-          // Botón para confirmar la venta
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: _carrito.isNotEmpty
-                  ? _confirmarVenta
-                  : null, // Deshabilitar si el carrito está vacío
-              child: const Text('Confirmar Venta'),
-            ),
-          ),
-        ],
+            if (_carrito.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('El carrito está vacío'),
+              ),
+          ],
+        ),
       ),
     );
   }

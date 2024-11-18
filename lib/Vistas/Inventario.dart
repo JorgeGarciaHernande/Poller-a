@@ -150,10 +150,10 @@ class _InventarioPageState extends State<InventarioPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.orangeAccent,
+        backgroundColor: const Color.fromARGB(255, 255, 146, 21),
         flexibleSpace: SafeArea(
           child: Container(
-            color: Colors.orangeAccent,
+            color: const Color.fromARGB(255, 255, 146, 21),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
