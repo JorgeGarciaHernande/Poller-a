@@ -2,114 +2,184 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReporteController {
   final CollectionReference ventas = FirebaseFirestore.instance.collection('ventas');
+  final CollectionReference ventasDiarias = FirebaseFirestore.instance.collection('ventas_diarias');
 
-  /// Obtener total de ventas diarias
-  Future<double> obtenerTotalVentasDiarias() async {
+  /// Verificar o crear la colección `ventas_diarias` si no existe
+  Future<void> verificarOCrearVentasDiarias() async {
     try {
+      QuerySnapshot snapshot = await ventasDiarias.get();
+      if (snapshot.docs.isEmpty) {
+        print("La colección `ventas_diarias` está vacía. Inicializando...");
+        await ventasDiarias.doc('ejemplo').set({
+          'fecha': DateTime.now().toIso8601String(),
+          'ganancia_total': 0.0,
+          'productos': {},
+        });
+        print("Colección `ventas_diarias` inicializada.");
+      } else {
+        print("La colección `ventas_diarias` ya existe.");
+      }
+    } catch (e) {
+      print("Error al verificar o crear la colección `ventas_diarias`: $e");
+    }
+  }
+
+  /// Registrar las ventas del día en la colección `ventas_diarias`
+  Future<void> registrarVentasDelDia() async {
+    try {
+      // Fecha actual
       DateTime now = DateTime.now();
       DateTime inicioDelDia = DateTime(now.year, now.month, now.day);
+
+      // Obtener las ventas del día actual
       QuerySnapshot snapshot = await ventas
           .where('fecha', isGreaterThanOrEqualTo: inicioDelDia)
           .get();
 
-      double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
+      double totalGanancias = 0.0;
+      Map<String, int> productosVendidos = {};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        totalGanancias += (data['total'] as double? ?? 0.0);
+
+        final carrito = data['carrito'] as List<dynamic>? ?? [];
+        for (var item in carrito) {
+          final nombreProducto = item['nombreProducto'] as String? ?? 'Desconocido';
+          final cantidad = item['cantidad'] as int? ?? 0;
+
+          productosVendidos[nombreProducto] =
+              (productosVendidos[nombreProducto] ?? 0) + cantidad;
+        }
+      }
+
+      // Registrar en `ventas_diarias`
+      String fechaHoy = "${inicioDelDia.year}-${inicioDelDia.month.toString().padLeft(2, '0')}-${inicioDelDia.day.toString().padLeft(2, '0')}";
+      await ventasDiarias.doc(fechaHoy).set({
+        'fecha': fechaHoy,
+        'ganancia_total': totalGanancias,
+        'productos': productosVendidos,
+      });
+
+      print("Ventas del día registradas correctamente.");
+    } catch (e) {
+      print("Error al registrar ventas del día: $e");
+    }
+  }
+
+  /// Obtener ganancias del día actual
+  Future<double> obtenerGananciasDiaActual() async {
+    try {
+      DateTime now = DateTime.now();
+      DateTime inicioDelDia = DateTime(now.year, now.month, now.day);
+
+      QuerySnapshot snapshot = await ventas
+          .where('fecha', isGreaterThanOrEqualTo: inicioDelDia)
+          .get();
+
+      double totalGanancias = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
         return sum + (data['total'] as double? ?? 0.0);
       });
 
-      return totalVentas;
+      return totalGanancias;
     } catch (e) {
-      print("Error al obtener total de ventas diarias: $e");
+      print("Error al obtener ganancias del día actual: $e");
       return 0.0;
     }
   }
 
-  /// Obtener total de ventas semanales
-  Future<double> obtenerTotalVentasSemanales() async {
+  /// Obtener ganancias semanales (desde el lunes)
+  Future<double> obtenerGananciasSemanales() async {
     try {
       DateTime now = DateTime.now();
       DateTime inicioDeSemana = now.subtract(Duration(days: now.weekday - 1));
+      DateTime inicioDia = DateTime(inicioDeSemana.year, inicioDeSemana.month, inicioDeSemana.day);
+
       QuerySnapshot snapshot = await ventas
-          .where('fecha', isGreaterThanOrEqualTo: inicioDeSemana)
+          .where('fecha', isGreaterThanOrEqualTo: inicioDia)
           .get();
 
-      double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
+      double totalGanancias = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
         return sum + (data['total'] as double? ?? 0.0);
       });
 
-      return totalVentas;
+      return totalGanancias;
     } catch (e) {
-      print("Error al obtener total de ventas semanales: $e");
+      print("Error al obtener ganancias semanales: $e");
       return 0.0;
     }
   }
 
-  /// Obtener total de ventas mensuales
-  Future<double> obtenerTotalVentasMensuales() async {
+  /// Obtener ganancias mensuales
+  Future<double> obtenerGananciasMensuales() async {
     try {
       DateTime now = DateTime.now();
       DateTime inicioDelMes = DateTime(now.year, now.month, 1);
+
       QuerySnapshot snapshot = await ventas
           .where('fecha', isGreaterThanOrEqualTo: inicioDelMes)
           .get();
 
-      double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
+      double totalGanancias = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
         return sum + (data['total'] as double? ?? 0.0);
       });
 
-      return totalVentas;
+      return totalGanancias;
     } catch (e) {
-      print("Error al obtener total de ventas mensuales: $e");
+      print("Error al obtener ganancias mensuales: $e");
       return 0.0;
     }
   }
 
-  /// Obtener datos para la gráfica
-  Future<List<Map<String, dynamic>>> obtenerDatosParaGrafica() async {
+  /// Obtener ventas por día desde `ventas_diarias`
+  Future<List<Map<String, dynamic>>> obtenerVentasPorDia() async {
     try {
-      QuerySnapshot snapshot = await ventas.get();
+      QuerySnapshot snapshot = await ventasDiarias.orderBy('fecha').get();
 
-      // Mapear productos y sus cantidades
-      Map<String, int> conteoProductos = {};
-
-      for (var doc in snapshot.docs) {
+      return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        final carrito = data['carrito'] as List<dynamic>;
-
-        for (var producto in carrito) {
-          final nombreProducto = producto['nombreProducto'] as String? ?? 'Desconocido';
-          final cantidad = producto['cantidad'] as int? ?? 0;
-
-          if (conteoProductos.containsKey(nombreProducto)) {
-            conteoProductos[nombreProducto] = conteoProductos[nombreProducto]! + cantidad;
-          } else {
-            conteoProductos[nombreProducto] = cantidad;
-          }
-        }
-      }
-
-      return conteoProductos.entries
-          .map((entry) => {
-                'producto': entry.key,
-                'cantidad': entry.value,
-              })
-          .toList();
+        return {
+          'fecha': data['fecha'] as String,
+          'ganancia': data['ganancia_total'] as double? ?? 0.0,
+        };
+      }).toList();
     } catch (e) {
-      print("Error al obtener datos para la gráfica: $e");
+      print("Error al obtener ventas por día: $e");
       return [];
     }
   }
 
-  /// Cerrar caja y obtener el total del día
-  Future<void> cerrarCaja() async {
+  /// Obtener productos más vendidos del día actual
+  Future<Map<String, int>> obtenerProductosDelDiaActual() async {
     try {
-      double total = await obtenerTotalVentasDiarias();
-      print("Caja cerrada. Total del día: \$${total.toStringAsFixed(2)}");
-      // Aquí podrías registrar el total en otra colección si lo necesitas
+      DateTime now = DateTime.now();
+      DateTime inicioDelDia = DateTime(now.year, now.month, now.day);
+
+      QuerySnapshot snapshot = await ventas
+          .where('fecha', isGreaterThanOrEqualTo: inicioDelDia)
+          .get();
+
+      Map<String, int> productos = {};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final carrito = data['carrito'] as List<dynamic>? ?? [];
+
+        for (var item in carrito) {
+          final nombreProducto = item['nombreProducto'] as String? ?? 'Desconocido';
+          final cantidad = item['cantidad'] as int? ?? 0;
+
+          productos[nombreProducto] = (productos[nombreProducto] ?? 0) + cantidad;
+        }
+      }
+
+      return productos;
     } catch (e) {
-      print("Error al cerrar caja: $e");
+      print("Error al obtener productos del día actual: $e");
+      return {};
     }
   }
 }
