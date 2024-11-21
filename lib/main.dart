@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
-import 'Controladores/AuthService.dart';
-import 'Vistas/Menu.dart'; // Asegúrate de tener esta vista creada
+import 'Vistas/loginview.dart'; // Asegúrate de tener esta vista creada
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +13,9 @@ void main() async {
   // quita el comentario de la siguiente línea y comenta la linea 15
   //bool autorizado = await verificarOCrearDispositivo();
   bool autorizado = true; // Cambiado para pruebas
+
+  // Verificar o crear la colección necesaria para las ventas diarias
+  await verificarOCrearVentasDiarias();
 
   runApp(MainApp(autorizado: autorizado));
 }
@@ -27,7 +30,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: autorizado
-          ? const Menu() // Cambiado a la clase Menu
+          ? const LoginPage() // Cambiado a la clase Menu
           : Scaffold(
               body: Container(
                 color:
@@ -43,11 +46,7 @@ class MainApp extends StatelessWidget {
                       ),
                       const SizedBox(
                           height: 20), // Espacio entre el cuadrado y el texto
-                      const Text(
-                        "Dispositivo no autorizado",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                     
                     ],
                   ),
                 ),
@@ -58,8 +57,28 @@ class MainApp extends StatelessWidget {
 }
 
 // Función para verificar o crear el dispositivo en Firestore
-Future<bool> verificarOCrearDispositivo() async {
-  final AuthService authService = AuthService();
-  String deviceId = await authService.getOrCreateDeviceId();
-  return await authService.verificarAutorizacion(deviceId);
+
+
+// Función para verificar o crear la colección `ventas_diarias`
+Future<void> verificarOCrearVentasDiarias() async {
+  try {
+    CollectionReference ventasDiarias =
+        FirebaseFirestore.instance.collection('ventas_diarias');
+
+    QuerySnapshot snapshot = await ventasDiarias.get();
+
+    if (snapshot.docs.isEmpty) {
+      print("La colección `ventas_diarias` está vacía. Inicializando...");
+      await ventasDiarias.doc('ejemplo').set({
+        'fecha': DateTime.now().toIso8601String(),
+        'ganancia_total': 0.0,
+        'productos': {},
+      });
+      print("Colección `ventas_diarias` inicializada.");
+    } else {
+      print("La colección `ventas_diarias` ya existe.");
+    }
+  } catch (e) {
+    print("Error al verificar o crear la colección `ventas_diarias`: $e");
+  }
 }

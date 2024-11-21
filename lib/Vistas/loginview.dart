@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '/Controladores/logincontrolador.dart'; // Importa el archivo de autenticación
-import 'inventario.dart'; // Importa la vista de inventario
+import 'Menu.dart'; // Importa la vista de inventario
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -32,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
         // Navegar a la vista de inventario si el inicio de sesión es exitoso
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const InventarioPage()),
+          MaterialPageRoute(builder: (context) => const Menu()),
         );
       },
     );

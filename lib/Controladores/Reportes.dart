@@ -25,48 +25,73 @@ class ReporteController {
   }
 
   /// Registrar las ventas del día en la colección `ventas_diarias`
-  Future<void> registrarVentasDelDia() async {
-    try {
-      // Fecha actual
-      DateTime now = DateTime.now();
-      DateTime inicioDelDia = DateTime(now.year, now.month, now.day);
+ Future<void> registrarVentasDelDia() async {
+  try {
+    // Fecha actual
+    DateTime now = DateTime.now();
+    DateTime inicioDelDia = DateTime(now.year, now.month, now.day);
 
-      // Obtener las ventas del día actual
-      QuerySnapshot snapshot = await ventas
-          .where('fecha', isGreaterThanOrEqualTo: inicioDelDia)
-          .get();
+    // Obtener las ventas del día actual
+    QuerySnapshot snapshot = await ventas
+        .where('fecha', isGreaterThanOrEqualTo: inicioDelDia)
+        .get();
 
-      double totalGanancias = 0.0;
-      Map<String, int> productosVendidos = {};
+    double totalGanancias = 0.0;
+    Map<String, int> productosVendidos = {};
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        totalGanancias += (data['total'] as double? ?? 0.0);
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      totalGanancias += (data['total'] as double? ?? 0.0);
 
-        final carrito = data['carrito'] as List<dynamic>? ?? [];
-        for (var item in carrito) {
-          final nombreProducto = item['nombreProducto'] as String? ?? 'Desconocido';
-          final cantidad = item['cantidad'] as int? ?? 0;
+      final carrito = data['carrito'] as List<dynamic>? ?? [];
+      for (var item in carrito) {
+        final nombreProducto = item['nombreProducto'] as String? ?? 'Desconocido';
+        final cantidad = item['cantidad'] as int? ?? 0;
 
-          productosVendidos[nombreProducto] =
-              (productosVendidos[nombreProducto] ?? 0) + cantidad;
-        }
+        productosVendidos[nombreProducto] =
+            (productosVendidos[nombreProducto] ?? 0) + cantidad;
       }
+    }
 
-      // Registrar en `ventas_diarias`
-      String fechaHoy = "${inicioDelDia.year}-${inicioDelDia.month.toString().padLeft(2, '0')}-${inicioDelDia.day.toString().padLeft(2, '0')}";
+    // Registrar en `ventas_diarias`
+    String fechaHoy = "${inicioDelDia.year}-${inicioDelDia.month.toString().padLeft(2, '0')}-${inicioDelDia.day.toString().padLeft(2, '0')}";
+
+    // Verificar si ya existe un documento para la fecha actual
+    DocumentSnapshot docSnapshot = await ventasDiarias.doc(fechaHoy).get();
+
+    if (docSnapshot.exists) {
+      // Si ya existe, actualizar las ganancias y los productos
+      final existingData = docSnapshot.data() as Map<String, dynamic>;
+      double existingGanancia = existingData['ganancia_total'] as double? ?? 0.0;
+      Map<String, int> existingProductos = Map<String, int>.from(existingData['productos'] ?? {});
+
+      // Sumar la ganancia actual
+      double nuevaGanancia = existingGanancia + totalGanancias;
+
+      // Actualizar los productos vendidos
+      productosVendidos.forEach((key, value) {
+        existingProductos[key] = (existingProductos[key] ?? 0) + value;
+      });
+
+      // Guardar los cambios
+      await ventasDiarias.doc(fechaHoy).update({
+        'ganancia_total': nuevaGanancia,
+        'productos': existingProductos,
+      });
+    } else {
+      // Si no existe, crear un nuevo documento
       await ventasDiarias.doc(fechaHoy).set({
         'fecha': fechaHoy,
         'ganancia_total': totalGanancias,
         'productos': productosVendidos,
       });
-
-      print("Ventas del día registradas correctamente.");
-    } catch (e) {
-      print("Error al registrar ventas del día: $e");
     }
-  }
 
+    print("Ventas del día registradas correctamente.");
+  } catch (e) {
+    print("Error al registrar ventas del día: $e");
+  }
+}
   /// Obtener ganancias del día actual
   Future<double> obtenerGananciasDiaActual() async {
     try {
