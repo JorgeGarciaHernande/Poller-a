@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/Controladores/logincontrolador.dart'; // Importa el archivo de autenticación
+import 'inventario.dart'; // Importa la vista de inventario
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,29 +13,38 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  bool _isLoading = false; // Variable para controlar el estado de carga
+  bool _isLoading = false;
 
+  // Función para manejar el inicio de sesión
   Future<void> _iniciarSesion() async {
     setState(() {
-      _isLoading = true; // Inicia la carga
+      _isLoading = true;
     });
 
     String username = _usernameController.text;
     String password = _passwordController.text;
-    bool loginExitoso = await _authService.verificarUsuario(username, password);
+
+    // Llamamos a la función de autenticación y pasamos la navegación como callback
+    bool loginExitoso = await _authService.verificarUsuario(
+      username,
+      password,
+      () {
+        // Navegar a la vista de inventario si el inicio de sesión es exitoso
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const InventarioPage()),
+        );
+      },
+    );
 
     setState(() {
-      _isLoading = false; // Finaliza la carga
+      _isLoading = false;
     });
 
-    if (loginExitoso) {
+    if (!loginExitoso) {
+      // Mostrar mensaje de error si el inicio de sesión falla
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Inicio de sesión exitoso')),
-      );
-      // Aquí puedes redirigir a otra pantalla
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Usuario o contraseña incorrectos')),
+        const SnackBar(content: Text('Usuario o contraseña incorrectos')),
       );
     }
   }
@@ -53,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             TextField(
               controller: _usernameController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Usuario',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person),
@@ -62,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Contraseña',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.lock),
@@ -71,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 24),
             _isLoading
-                ? CircularProgressIndicator() // Muestra indicador de carga
+                ? const CircularProgressIndicator() // Indicador de carga
                 : ElevatedButton(
                     onPressed: _iniciarSesion,
                     child: const Text('Iniciar sesión'),
