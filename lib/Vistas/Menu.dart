@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '/Vistas/Ventas.dart'; // Asegúrate de tener esta vista creada
-import '/Vistas/Dispositivos.dart'; // Asegúrate de tener esta vista creada
-import '/Vistas/Inventario.dart'; // Asegúrate de tener esta vista creada
-import '/Vistas/Reportesvista.dart'; // Asegúrate de tener esta vista creada
+import '/Vistas/Ventas.dart';
+
+import '/Vistas/Inventario.dart';
+import '/Vistas/Reportesvista.dart';
+import '/Vistas/Usuarios.dart'; // Asegúrate de tener esta vista creada
 
 class Menu extends StatelessWidget {
   const Menu({super.key});
@@ -13,56 +14,74 @@ class Menu extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Menú Principal'),
         centerTitle: true,
+        backgroundColor: Colors.blueAccent,
       ),
-      body: Center( // Centra todo el contenido
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // Ajusta el espacio de la columna para centrado vertical
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.count(
+          crossAxisCount: 2, // Dos botones por fila
+          crossAxisSpacing: 16.0,
+          mainAxisSpacing: 16.0,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la vista de Administrar Empleados
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const DispositivosPage()),
-                );
-              },
-              child: const Text('Administrar Empleados'),
+            _buildMenuButton(
+              context,
+              label: 'Ventas',
+              icon: Icons.shopping_cart,
+              targetPage: const VentaPage(),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la vista de Ventas
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const VentaPage()),
-                );
-              },
-              child: const Text('Ventas'),
+            _buildMenuButton(
+              context,
+              label: 'Inventario',
+              icon: Icons.inventory,
+              targetPage: const InventarioPage(),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la vista de Inventario
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const InventarioPage()),
-                );
-              },
-              child: const Text('Inventario'),
+            _buildMenuButton(
+              context,
+              label: 'Reportes',
+              icon: Icons.bar_chart,
+              targetPage: const ReportePage(),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la vista de Reportes
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ReportePage()),
-                );
-              },
-              child: const Text('Reportes'),
+            _buildMenuButton(
+              context,
+              label: 'Usuarios',
+              icon: Icons.person,
+              targetPage: const UsuarioPage(), // Nueva vista
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMenuButton(
+      BuildContext context, {
+        required String label,
+        required IconData icon,
+        required Widget targetPage,
+      }) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => targetPage),
+        );
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
       ),
     );
   }
