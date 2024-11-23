@@ -11,7 +11,7 @@ class MenuController {
   void irAVentas(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const VentaPage()),
+      MaterialPageRoute(builder: (context) => const Ventas()),
     );
   }
 

@@ -1,40 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:polleriaproyecto/Controladores/carrito_controller.dart';
 import 'package:polleriaproyecto/Vistas/carritoview.dart';
-import '/Controladores/Ventascontrolador.dart';
 
-class VentaPage extends StatefulWidget {
-  const VentaPage({super.key});
+class Ventas extends StatefulWidget {
+  const Ventas({Key? key}) : super(key: key);
 
   @override
-  _VentaPageState createState() => _VentaPageState();
+  _VentasState createState() => _VentasState();
 }
 
-class _VentaPageState extends State<VentaPage> with SingleTickerProviderStateMixin {
-  final VentaController _ventaController = VentaController();
-  final CarritoController _carritoController = CarritoController(); // Instanciamos el controlador del carrito
-  List<Map<String, dynamic>> _productosInventario = [];
+class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CarritoController _carritoController = CarritoController();
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _cargarProductosDesdeInventario();
   }
 
-  Future<void> _cargarProductosDesdeInventario() async {
-    try {
-      List<Map<String, dynamic>> productos =
-          await _ventaController.obtenerProductosDesdeInventario();
-      setState(() {
-        _productosInventario = productos;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar productos: $e')),
-      );
+  String _getMensajeSegunHora() {
+    final horaActual = DateTime.now().hour;
+    if (horaActual >= 6 && horaActual < 12) {
+      return '¿Qué quieres para el desayuno?';
+    } else if (horaActual >= 12 && horaActual < 18) {
+      return '¿Qué quieres para el almuerzo?';
+    } else {
+      return '¿Qué quieres para la cena?';
     }
+  }
+
+  Stream<QuerySnapshot> _obtenerProductosPorCategoria(String categoria) {
+    return _firestore
+        .collection('menu')
+        .where('categoria', isEqualTo: categoria)
+        .snapshots();
   }
 
   void _agregarAlCarrito(Map<String, dynamic> producto) {
@@ -42,7 +44,7 @@ class _VentaPageState extends State<VentaPage> with SingleTickerProviderStateMix
       idProducto: producto['id'],
       nombreProducto: producto['Nombre'],
       precioProducto: producto['precio'],
-      cantidad: 1, // Puedes ajustar la cantidad si es necesario
+      cantidad: 1,
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${producto['Nombre']} agregado al carrito')),
@@ -53,9 +55,7 @@ class _VentaPageState extends State<VentaPage> with SingleTickerProviderStateMix
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CarritoPage(
-          carritoController: _carritoController, // Pasamos el controlador al carrito
-        ),
+        builder: (context) => CarritoPage(carritoController: _carritoController),
       ),
     );
   }
@@ -64,21 +64,9 @@ class _VentaPageState extends State<VentaPage> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Realizar Venta'),
+        title: Text(_getMensajeSegunHora()),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 255, 146, 21),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.black54,
-          tabs: const [
-            Tab(text: 'Platillos'),
-            Tab(text: 'Pollos'),
-            Tab(text: 'Hamburguesas'),
-            Tab(text: 'Adicionales'),
-          ],
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart),
@@ -86,104 +74,124 @@ class _VentaPageState extends State<VentaPage> with SingleTickerProviderStateMix
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildGridProductos(), // Vista para Platillos
-          _buildGridProductos(), // Vista para Pollos
-          _buildGridProductos(), // Vista para Hamburguesas
-          _buildGridProductos(), // Vista para Adicionales
+          TabBar(
+            controller: _tabController,
+            indicatorColor: const Color.fromARGB(255, 255, 146, 21),
+            labelColor: const Color.fromARGB(255, 255, 146, 21),
+            unselectedLabelColor: Colors.black54,
+            tabs: const [
+              Tab(text: 'Platillos'),
+              Tab(text: 'Pollos'),
+              Tab(text: 'Hamburguesas'),
+              Tab(text: 'Adicionales'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildGridProductos('Platillos'),
+                _buildGridProductos('Pollos'),
+                _buildGridProductos('Hamburguesas'),
+                _buildGridProductos('Adicionales'),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildGridProductos() {
-    return Container(
-      color: const Color.fromARGB(255, 255, 146, 21), // Fondo naranja claro
-      child: Column(
-        children: [
-          // Productos en formato Grid
-          Expanded(
-            child: _productosInventario.isNotEmpty
-                ? GridView.builder(
-                    padding: const EdgeInsets.all(8.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // Dos columnas
-                      crossAxisSpacing: 8.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio: 3 / 4,
+  Widget _buildGridProductos(String categoria) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _obtenerProductosPorCategoria(categoria),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No hay productos disponibles.'));
+        }
+
+        final productos = snapshot.data!.docs;
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(8.0),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 8.0,
+            mainAxisSpacing: 8.0,
+            childAspectRatio: 3 / 4,
+          ),
+          itemCount: productos.length,
+          itemBuilder: (context, index) {
+            final producto = productos[index].data() as Map<String, dynamic>;
+            return Card(
+              elevation: 4.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(10.0),
+                      ),
+                      child: Image.network(
+                        producto['imagen'] ?? 'https://via.placeholder.com/150',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
                     ),
-                    itemCount: _productosInventario.length,
-                    itemBuilder: (context, index) {
-                      final producto = _productosInventario[index];
-                      return GestureDetector(
-                        onTap: () => _agregarAlCarrito(producto),
-                        child: Card(
-                          elevation: 4.0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          producto['Nombre'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(10.0),
-                                  ),
-                                  child: Image.network(
-                                    producto['imagen'] ??
-                                        'https://via.placeholder.com/150',
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      producto['Nombre'],
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      '\$${producto['precio'].toStringAsFixed(2)}', // Aquí cambiamos el símbolo
-                                      style: const TextStyle(
-                                        color: Colors.green,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.orange,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                      ),
-                                      onPressed: () => _agregarAlCarrito(producto),
-                                      icon: const Icon(Icons.add_shopping_cart),
-                                      label: const Text('Agregar'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '\$${producto['precio'].toStringAsFixed(2)} MXN',
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 14,
                           ),
                         ),
-                      );
-                    },
-                  )
-                : const Center(child: CircularProgressIndicator()),
-          ),
-        ],
-      ),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 255, 146, 21),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () => _agregarAlCarrito({
+                            'id': productos[index].id,
+                            'Nombre': producto['Nombre'],
+                            'precio': producto['precio']
+                          }),
+                          icon: const Icon(Icons.add_shopping_cart),
+                          label: const Text('Agregar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

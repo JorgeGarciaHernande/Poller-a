@@ -37,11 +37,31 @@ class CarritoPage extends StatelessWidget {
                             child: Card(
                               elevation: 3,
                               child: ListTile(
-                                leading: Image.network(
-                                  producto['imagen'],
-                                  fit: BoxFit.cover,
-                                  width: 50,
-                                  height: 50,
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8), // Bordes redondeados
+                                  child: Image.network(
+                                    producto['imagen'],
+                                    width: 70, // Tamaño ajustado
+                                    height: 70, // Tamaño ajustado
+                                    fit: BoxFit.cover, // Ajusta la imagen sin distorsionar
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        return child;
+                                      } else {
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                    (loadingProgress.expectedTotalBytes ?? 1)
+                                                : null,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error, color: Colors.red); // Muestra un icono de error si la imagen no se carga
+                                    },
+                                  ),
                                 ),
                                 title: Text(
                                   producto['nombreProducto'],
@@ -51,7 +71,7 @@ class CarritoPage extends StatelessWidget {
                                 trailing: Column(
                                   children: [
                                     Text(
-                                      '\$${(producto['precioProducto'] * producto['cantidad']).toStringAsFixed(2)}', // Cambio aquí
+                                      '\$${(producto['precioProducto'] * producto['cantidad']).toStringAsFixed(2)}',
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                     Row(
@@ -100,7 +120,7 @@ class CarritoPage extends StatelessWidget {
                   animation: carritoController,
                   builder: (context, _) {
                     return Text(
-                      '\$${carritoController.obtenerTotalCarrito().toStringAsFixed(2)}', // Cambio aquí
+                      '\$${carritoController.obtenerTotalCarrito().toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     );
                   },

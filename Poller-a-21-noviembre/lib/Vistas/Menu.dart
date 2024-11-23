@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:polleriaproyecto/Vistas/comida.dart';
 import '/Vistas/Ventas.dart';
 import '/Vistas/Inventario.dart';
 import '/Vistas/Reportesvista.dart';
 import '/Vistas/Usuarios.dart'; // Asegúrate de tener esta vista creada
 import '/Vistas/Clientes.dart'; // Nueva vista de Clientes, crea esta si no la tienes
-
+ 
 class Menu extends StatelessWidget {
   const Menu({super.key});
 
@@ -35,7 +36,7 @@ class Menu extends StatelessWidget {
                 context,
                 label: 'Ventas',
                 icon: Icons.shopping_cart,
-                targetPage: const VentaPage(),
+                targetPage: const Ventas(),
               ),
               _buildMenuButton(
                 context,
@@ -60,6 +61,12 @@ class Menu extends StatelessWidget {
                 label: 'Clientes',  // Botón de Clientes
                 icon: Icons.people, // Icono para representar clientes
                 targetPage: const ClientesPage(),  // Nueva vista de Clientes
+              ),
+              _buildMenuButton(
+                context,
+                label: 'Menú',  // Botón de Menú
+                icon: Icons.restaurant_menu, // Icono para representar el menú
+                targetPage: const comida(),  // Nueva vista de Menú
               ),
             ],
           ),

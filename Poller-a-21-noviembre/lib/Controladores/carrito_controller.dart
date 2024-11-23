@@ -15,9 +15,7 @@ class CarritoController extends ChangeNotifier {
     required double precioProducto,
     required int cantidad,
     String? imagen,
-    String? ingredienteMitad1,
-    String? ingredienteMitad2,
-    String? nota,
+     
   }) {
     // Verificar si el producto ya existe en el carrito
     final index = _productosSeleccionados.indexWhere((producto) => producto['idProducto'] == idProducto);
@@ -32,9 +30,7 @@ class CarritoController extends ChangeNotifier {
         'precioProducto': precioProducto,
         'cantidad': cantidad,
         'imagen': imagen ?? '', // Imagen opcional
-        'ingredienteMitad1': ingredienteMitad1 ?? 'No especificado',
-        'ingredienteMitad2': ingredienteMitad2 ?? 'No especificado',
-        'nota': nota ?? '',
+         
       });
     }
     notifyListeners(); // Notificar a la vista para que se actualice

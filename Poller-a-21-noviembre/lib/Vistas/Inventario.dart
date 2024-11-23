@@ -261,7 +261,7 @@ class _InventarioPageState extends State<InventarioPage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              const VentaPage()), // Navega a la vista de ventas
+                              const Ventas()), // Navega a la vista de ventas
                     );
                   },
                   icon: const Icon(Icons.shopping_cart),
