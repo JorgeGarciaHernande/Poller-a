@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:polleriaproyecto/Controladores/Ventascontrolador.dart';
 import 'package:polleriaproyecto/Controladores/clientes_controller.dart';
 import 'package:polleriaproyecto/Vistas/Menu.dart';
- 
+
 class CheckoutPage extends StatefulWidget {
   final List<Map<String, dynamic>> productos;
+  final String atendio; // Usuario que realizó la venta
 
-  const CheckoutPage({Key? key, required this.productos}) : super(key: key);
+  const CheckoutPage({Key? key, required this.productos, required this.atendio}) : super(key: key);
 
   @override
   _CheckoutPageState createState() => _CheckoutPageState();
@@ -20,22 +21,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   double totalPagar = 0.0;
   double pago = 0.0;
-  String metodoDePago = 'efectivo'; // Por defecto efectivo
+  String metodoDePago = 'efectivo';
   double cambio = 0.0;
 
-  List<Map<String, dynamic>> sugerenciasClientes = []; // Lista de sugerencias
+  List<Map<String, dynamic>> sugerenciasClientes = [];
   Map<String, dynamic>? clienteSeleccionado;
 
   @override
   void initState() {
     super.initState();
-    // Calcular el total a pagar con los productos
     totalPagar = widget.productos.fold(0.0, (sum, producto) {
       return sum + (producto['precioProducto'] * producto['cantidad']);
     });
   }
 
-  // Función para buscar clientes por nombre o teléfono
   Future<void> buscarCliente() async {
     String query = clienteController.text.trim();
     if (query.isNotEmpty) {
@@ -50,142 +49,54 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  // Función para seleccionar un cliente de la lista de sugerencias
   void seleccionarCliente(Map<String, dynamic> cliente) {
     setState(() {
       clienteSeleccionado = cliente;
-      clienteController.text = cliente['nombre']; // Mostrar el nombre del cliente en el campo de texto
-      sugerenciasClientes = []; // Limpiar las sugerencias después de seleccionar un cliente
+      clienteController.text = cliente['nombre'];
+      sugerenciasClientes = [];
     });
   }
 
-  // Función para mostrar el formulario de agregar cliente
-  void _mostrarFormularioAgregarCliente() {
-    final _formKey = GlobalKey<FormState>();
-    final TextEditingController _nombreController = TextEditingController();
-    final TextEditingController _telefonoController = TextEditingController();
-    final TextEditingController _direccionController = TextEditingController();
+  Future<void> registrarVenta() async {
+    if (clienteSeleccionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Debe seleccionar un cliente antes de finalizar la compra'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Agregar Cliente'),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _nombreController,
-                  decoration: const InputDecoration(labelText: 'Nombre'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Este campo es obligatorio';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _telefonoController,
-                  decoration: const InputDecoration(labelText: 'Número de Teléfono'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Este campo es obligatorio';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _direccionController,
-                  decoration: const InputDecoration(labelText: 'Dirección'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Este campo es obligatorio';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo sin hacer nada
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (_formKey.currentState?.validate() ?? false) {
-                  // Agregar cliente a Firestore
-                  await _clientesController.agregarCliente(
-                    nombre: _nombreController.text,
-                    numeroTelefono: _telefonoController.text,
-                    direccion: _direccionController.text,
-                  );
-                  Navigator.of(context).pop(); // Cerrar el cuadro de diálogo después de agregar
-                  setState(() {
-                    // Actualizar la lista de clientes
-                    clienteController.clear();
-                    clienteSeleccionado = null;
-                  });
-                }
-              },
-              child: const Text('Agregar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+    for (var producto in widget.productos) {
+      _ventaController.agregarProductoTemporal(
+        idProducto: producto['idProducto'],
+        nombreProducto: producto['nombreProducto'],
+        precioProducto: producto['precioProducto'],
+        cantidad: producto['cantidad'],
+      );
+    }
 
-  // Función para registrar la venta usando el controlador
- Future<void> registrarVenta() async {
-  if (clienteSeleccionado == null) {
-    // Si no se seleccionó un cliente, mostrar mensaje de error
+    // Llama a confirmarVenta con el campo atendio
+    await _ventaController.confirmarVenta(atendio: widget.atendio);
+
+    setState(() {
+      clienteSeleccionado = null;
+      pagoController.clear();
+      pago = 0.0;
+      cambio = 0.0;
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Debe seleccionar un cliente antes de finalizar la compra'),
-      backgroundColor: Colors.red,
+      content: Text('Venta registrada exitosamente'),
+      backgroundColor: Colors.green,
     ));
-    return;
-  }
 
-  // Añadir los productos seleccionados al carrito en el controlador de ventas
-  for (var producto in widget.productos) {
-    _ventaController.agregarProductoTemporal(
-      idProducto: producto['idProducto'],
-      nombreProducto: producto['nombreProducto'],
-      precioProducto: producto['precioProducto'],
-      cantidad: producto['cantidad'],
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const Menu(role: 'empleado')),
     );
   }
 
-  // Confirmar y registrar la venta en Firestore
-  await _ventaController.confirmarVenta();
-
-  // Limpiar la vista después de registrar la venta
-  setState(() {
-    clienteSeleccionado = null;
-    pagoController.clear();
-    pago = 0.0;
-    cambio = 0.0;
-  });
-
-  // Mostrar mensaje de éxito
-  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-    content: Text('Venta registrada exitosamente'),
-    backgroundColor: Colors.green,
-  ));
-
-  // Redirigir al Menú Principal
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => const Menu()),
-  );
-}
-
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -215,7 +126,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 border: OutlineInputBorder(),
                               ),
                               onChanged: (text) {
-                                buscarCliente(); // Buscar mientras se escribe
+                                buscarCliente();
                               },
                             ),
                           ),
@@ -227,7 +138,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // Sugerencias de clientes
                       if (sugerenciasClientes.isNotEmpty)
                         Container(
                           height: 200,
@@ -247,7 +157,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             },
                           ),
                         ),
-                      // Mostrar información del cliente seleccionado
                       if (clienteSeleccionado != null)
                         Row(
                           children: [
@@ -261,18 +170,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 ],
                               ),
                             ),
-                            ElevatedButton(
-                              onPressed: _mostrarFormularioAgregarCliente,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                              ),
-                              child: const Text('Agregar Cliente'),
-                            ),
                           ],
                         ),
-                      // Si no hay cliente seleccionado
-                      if (clienteSeleccionado == null)
-                        const Text('Cliente no encontrado o no seleccionado.'),
                     ],
                   ),
                 ),
@@ -284,8 +183,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: ListView(
-                    shrinkWrap: true, 
-                    physics: NeverScrollableScrollPhysics(), 
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
                     children: widget.productos.isEmpty
                         ? [const ListTile(title: Text('No hay productos en el carrito'))]
                         : widget.productos.map((producto) {
@@ -317,7 +216,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        child: DropdownButton<String>( 
+                        child: DropdownButton<String>(
                           isExpanded: true,
                           value: metodoDePago,
                           items: const [
@@ -374,11 +273,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           },
                         ),
                       ],
-                      if (metodoDePago == 'terminal') ...[
-                        const Text('Paga con: Terminal'),
-                        const SizedBox(height: 8),
-                        Text('Cambio: \$0.00', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
                       Row(
                         children: [
                           const Text('Cambio:'),
@@ -391,9 +285,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Botón de finalizar compra
               ElevatedButton(
-                onPressed: registrarVenta, // Llamar a la función para registrar la venta
+                onPressed: registrarVenta,
                 child: const Text('Finalizar Compra'),
               ),
             ],

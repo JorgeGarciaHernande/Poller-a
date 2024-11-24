@@ -4,9 +4,11 @@ import 'package:polleriaproyecto/Vistas/compra.dart';
 
 class CarritoPage extends StatelessWidget {
   final CarritoController carritoController;
+  final String atendio; // Usuario que realiza la compra
 
   const CarritoPage({
     required this.carritoController,
+    required this.atendio, // Recibimos el nombre del usuario
     Key? key,
   }) : super(key: key);
 
@@ -21,7 +23,7 @@ class CarritoPage extends StatelessWidget {
         children: [
           Expanded(
             child: AnimatedBuilder(
-              animation: carritoController, // Para actualizar la vista en tiempo real
+              animation: carritoController,
               builder: (context, _) {
                 final productos = carritoController.obtenerProductosSeleccionados();
                 return productos.isEmpty
@@ -38,12 +40,12 @@ class CarritoPage extends StatelessWidget {
                               elevation: 3,
                               child: ListTile(
                                 leading: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8), // Bordes redondeados
+                                  borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
                                     producto['imagen'],
-                                    width: 70, // Tamaño ajustado
-                                    height: 70, // Tamaño ajustado
-                                    fit: BoxFit.cover, // Ajusta la imagen sin distorsionar
+                                    width: 70,
+                                    height: 70,
+                                    fit: BoxFit.cover,
                                     loadingBuilder: (context, child, loadingProgress) {
                                       if (loadingProgress == null) {
                                         return child;
@@ -59,7 +61,7 @@ class CarritoPage extends StatelessWidget {
                                       }
                                     },
                                     errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error, color: Colors.red); // Muestra un icono de error si la imagen no se carga
+                                      return const Icon(Icons.error, color: Colors.red);
                                     },
                                   ),
                                 ),
@@ -134,12 +136,14 @@ class CarritoPage extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Acción para finalizar compra: Navegar a la página de Checkout
                   final productos = carritoController.obtenerProductosSeleccionados();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CheckoutPage(productos: productos),
+                      builder: (context) => CheckoutPage(
+                        productos: productos,
+                        atendio: atendio, // Pasamos el nombre del usuario
+                      ),
                     ),
                   );
                 },

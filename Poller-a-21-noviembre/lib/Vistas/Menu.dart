@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:polleriaproyecto/Vistas/comida.dart';
 import '/Vistas/Ventas.dart';
 import '/Vistas/Inventario.dart';
 import '/Vistas/Reportesvista.dart';
-import '/Vistas/Usuarios.dart'; // Asegúrate de tener esta vista creada
-import '/Vistas/Clientes.dart'; // Nueva vista de Clientes, crea esta si no la tienes
- 
+import '/Vistas/Usuarios.dart';
+import '/Vistas/Clientes.dart';
+import '/Vistas/comida.dart';
+
 class Menu extends StatelessWidget {
-  const Menu({super.key});
+  final String role;
+
+  const Menu({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class Menu extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: GridView.count(
-            crossAxisCount: 2, // Dos botones por fila
+            crossAxisCount: 2,
             crossAxisSpacing: 16.0,
             mainAxisSpacing: 16.0,
             children: [
@@ -38,36 +40,41 @@ class Menu extends StatelessWidget {
                 icon: Icons.shopping_cart,
                 targetPage: const Ventas(),
               ),
-              _buildMenuButton(
-                context,
-                label: 'Inventario',
-                icon: Icons.inventory,
-                targetPage: const InventarioPage(),
-              ),
-              _buildMenuButton(
-                context,
-                label: 'Reportes',
-                icon: Icons.bar_chart,
-                targetPage: const ReportePage(),
-              ),
-              _buildMenuButton(
-                context,
-                label: 'Usuarios',
-                icon: Icons.person,
-                targetPage: const UsuarioPage(),
-              ),
-              _buildMenuButton(
-                context,
-                label: 'Clientes',  // Botón de Clientes
-                icon: Icons.people, // Icono para representar clientes
-                targetPage: const ClientesPage(),  // Nueva vista de Clientes
-              ),
-              _buildMenuButton(
-                context,
-                label: 'Menú',  // Botón de Menú
-                icon: Icons.restaurant_menu, // Icono para representar el menú
-                targetPage: const comida(),  // Nueva vista de Menú
-              ),
+              if (role == 'admin')
+                _buildMenuButton(
+                  context,
+                  label: 'Inventario',
+                  icon: Icons.inventory,
+                  targetPage: const InventarioPage(),
+                ),
+              if (role == 'admin')
+                _buildMenuButton(
+                  context,
+                  label: 'Reportes',
+                  icon: Icons.bar_chart,
+                  targetPage: const ReportePage(),
+                ),
+              if (role == 'admin')
+                _buildMenuButton(
+                  context,
+                  label: 'Usuarios',
+                  icon: Icons.person,
+                  targetPage: const UsuarioPage(),
+                ),
+              if (role == 'admin')
+                _buildMenuButton(
+                  context,
+                  label: 'Clientes',
+                  icon: Icons.people,
+                  targetPage: const ClientesPage(),
+                ),
+              if (role == 'admin')
+                _buildMenuButton(
+                  context,
+                  label: 'Menú',
+                  icon: Icons.restaurant_menu,
+                  targetPage: const comida(),
+                ),
             ],
           ),
         ),

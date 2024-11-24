@@ -50,7 +50,7 @@ class VentaController {
   }
 
   /// Confirmar y registrar la venta en Firestore
-  Future<void> confirmarVenta() async {
+  Future<void> confirmarVenta({required String atendio}) async {
     try {
       List<Map<String, dynamic>> carrito = [];
       double totalVenta = 0;
@@ -64,7 +64,7 @@ class VentaController {
           'idProducto': producto['idProducto'],
           'nombreProducto': producto['nombreProducto'],
           'precioProducto': producto['precioProducto'],
-          'cantidad': producto['cantidad'], // Asegurarse de incluir la cantidad
+          'cantidad': producto['cantidad'],
           'subtotal': subtotal,
           'nota': producto['nota'] ?? '',
         });
@@ -81,6 +81,7 @@ class VentaController {
         'total': totalVenta,
         'notaGeneral': notaGeneral.trim(), // Eliminar espacios o saltos de línea innecesarios
         'fecha': FieldValue.serverTimestamp(), // Fecha de la venta
+        'atendio': atendio, // Nombre del usuario que atendió
       });
 
       _productosSeleccionados.clear(); // Limpiar el carrito
@@ -154,4 +155,3 @@ class VentaController {
     }
   }
 }
-

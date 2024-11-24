@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
  import 'package:polleriaproyecto/Vistas/Menu.dart';
+ import '/Controladores/logincontrolador.dart'; // Asegúrate de tener esta vista creada
+
 
 void main() {
   runApp(const MyApp());
@@ -76,25 +78,33 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _validateUser() {
-    final email = _emailController.text;
-    final password = _passwordController.text;
+ void _validateUser() async {
+  final username = _emailController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (_isUserRegistered && email.isNotEmpty && password.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const Menu(),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Usuario no registrado o datos inválidos."),
-        ),
-      );
-    }
+  if (username.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Por favor, complete todos los campos.")),
+    );
+    return;
   }
+
+  final role = await AuthService().verificarUsuario(username, password);
+
+  if (role != null) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => Menu(role: role)),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Usuario o contraseña incorrectos.")),
+    );
+  }
+}
+
+
+
 
   @override
   Widget build(BuildContext context) {

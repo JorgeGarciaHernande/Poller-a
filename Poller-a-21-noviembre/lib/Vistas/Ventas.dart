@@ -40,22 +40,26 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
   }
 
   void _agregarAlCarrito(Map<String, dynamic> producto) {
-    _carritoController.agregarProductoAlCarrito(
-      idProducto: producto['id'],
-      nombreProducto: producto['Nombre'],
-      precioProducto: producto['precio'],
-      cantidad: 1,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${producto['Nombre']} agregado al carrito')),
-    );
-  }
+  _carritoController.agregarProductoAlCarrito(
+    idProducto: producto['id'],
+    nombreProducto: producto['Nombre'],
+    precioProducto: (producto['precio'] as num).toDouble(), // Conversión explícita a double
+    cantidad: 1,
+  );
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('${producto['Nombre']} agregado al carrito')),
+  );
+}
+
 
   void _mostrarCarrito() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CarritoPage(carritoController: _carritoController),
+        builder: (context) => CarritoPage(
+          carritoController: _carritoController,
+          atendio: 'Empleado Actual', // Reemplaza con el usuario actual
+        ),
       ),
     );
   }

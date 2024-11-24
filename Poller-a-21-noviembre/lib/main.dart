@@ -8,16 +8,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Verificar si el dispositivo está autorizado
-  // para ver la ventana de dispositivo no autorizado
-  // quita el comentario de la siguiente línea y comenta la linea 15
-  //bool autorizado = await verificarOCrearDispositivo();
-  bool autorizado = true; // Cambiado para pruebas
-
   // Verificar o crear la colección necesaria para las ventas diarias
   await verificarOCrearVentasDiarias();
 
-  runApp(MainApp(autorizado: autorizado));
+  // Crear usuarios (administrador y empleado) si no existen
+  await crearUsuariosPredeterminados();
+
+  runApp(const MainApp(autorizado: true));
 }
 
 class MainApp extends StatelessWidget {
@@ -30,7 +27,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: autorizado
-          ? const LoginPage() // Cambiado a la clase Menu
+          ? const LoginPage() // Cambiado a la clase LoginPage
           : Scaffold(
               body: Container(
                 color:
@@ -46,7 +43,6 @@ class MainApp extends StatelessWidget {
                       ),
                       const SizedBox(
                           height: 20), // Espacio entre el cuadrado y el texto
-                     
                     ],
                   ),
                 ),
@@ -55,9 +51,6 @@ class MainApp extends StatelessWidget {
     );
   }
 }
-
-// Función para verificar o crear el dispositivo en Firestore
-
 
 // Función para verificar o crear la colección `ventas_diarias`
 Future<void> verificarOCrearVentasDiarias() async {
@@ -80,5 +73,51 @@ Future<void> verificarOCrearVentasDiarias() async {
     }
   } catch (e) {
     print("Error al verificar o crear la colección `ventas_diarias`: $e");
+  }
+}
+
+// Función para crear usuarios predeterminados (admin y empleado)
+Future<void> crearUsuariosPredeterminados() async {
+  try {
+    CollectionReference usuarios =
+        FirebaseFirestore.instance.collection('usuarios');
+
+    // Verificar y crear usuario administrador
+    QuerySnapshot adminSnapshot = await usuarios
+        .where('username', isEqualTo: 'admin')
+        .limit(1)
+        .get();
+
+    if (adminSnapshot.docs.isEmpty) {
+      print("Creando usuario administrador...");
+      await usuarios.add({
+        'username': 'admin',
+        'password': 'admin123', // Cambia esta contraseña según tu preferencia
+        'role': 'admin',
+      });
+      print("Usuario administrador creado con éxito.");
+    } else {
+      print("El usuario administrador ya existe.");
+    }
+
+    // Verificar y crear usuario empleado
+    QuerySnapshot empleadoSnapshot = await usuarios
+        .where('username', isEqualTo: 'empleado')
+        .limit(1)
+        .get();
+
+    if (empleadoSnapshot.docs.isEmpty) {
+      print("Creando usuario empleado...");
+      await usuarios.add({
+        'username': 'empleado',
+        'password': 'empleado123', // Cambia esta contraseña según tu preferencia
+        'role': 'empleado',
+      });
+      print("Usuario empleado creado con éxito.");
+    } else {
+      print("El usuario empleado ya existe.");
+    }
+  } catch (e) {
+    print("Error al crear usuarios predeterminados: $e");
   }
 }
