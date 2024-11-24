@@ -1,61 +1,7 @@
 import 'package:flutter/material.dart';
- import 'package:polleriaproyecto/Vistas/Menu.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Pollería Proyecto',
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-      ),
-      home: const SplashScreen(),
-    );
-  }
-}
-
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
-
-  @override
-  _SplashScreenState createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-
-    // Espera 5 segundos antes de navegar a la pantalla de Login
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Image.network(
-          '', // Reemplaza con la URL de tu logo
-          width: 200,
-          height: 200,
-        ),
-      ),
-    );
-  }
-}
-
+import 'package:polleriaproyecto/Controladores/logincontrolador.dart';
+import 'package:polleriaproyecto/Vistas/Menu.dart';
+ 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -65,10 +11,9 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _showLoginFields = false;
-  bool _isUserRegistered = true; // Cambia esta variable según tu lógica
-
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService(); // Instancia de AuthService
 
   void _onLoginPressed() {
     setState(() {
@@ -76,21 +21,37 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _validateUser() {
-    final email = _emailController.text;
+  void _validateUser() async {
+    final username = _usernameController.text;
     final password = _passwordController.text;
 
-    if (_isUserRegistered && email.isNotEmpty && password.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const Menu(),
-        ),
+    if (username.isNotEmpty && password.isNotEmpty) {
+      bool isValidUser = await _authService.verificarUsuario(
+        username,
+        password,
+        () {
+          // Acción en caso de éxito (opcional, aquí vacío)
+        },
       );
+
+      if (isValidUser) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Menu(username: username), // Pasa el usuario
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Usuario o contraseña incorrectos."),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Usuario no registrado o datos inválidos."),
+          content: Text("Por favor, llena todos los campos."),
         ),
       );
     }
@@ -142,9 +103,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   if (_showLoginFields) ...[
                     TextField(
-                      controller: _emailController,
+                      controller: _usernameController,
                       decoration: InputDecoration(
-                        hintText: 'E-mail',
+                        hintText: 'Usuario',
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
@@ -157,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextField(
                       controller: _passwordController,
                       decoration: InputDecoration(
-                        hintText: 'Password',
+                        hintText: 'Contraseña',
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(

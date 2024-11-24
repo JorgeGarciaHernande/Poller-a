@@ -1,33 +1,26 @@
 import 'package:flutter/material.dart';
-import '/Vistas/Ventas.dart'; // Asegúrate de tener esta vista creada
- import '/Vistas/Inventario.dart'; // Asegúrate de tener esta vista creada
-import '/Vistas/Reportesvista.dart'; // Asegúrate de tener esta vista creada
-
+import 'package:polleriaproyecto/Vistas/Menu.dart';
+ 
 class MenuController {
-  // Función para navegar a la vista de administración de empleados
-   
+  late String _username;
 
-  // Función para navegar a la vista de ventas
-  void irAVentas(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const Ventas()),
-    );
+  // Método para establecer el nombre de usuario
+  void setUsername(String username) {
+    _username = username;
   }
 
-  // Función para navegar a la vista de inventario
-  void irAInventario(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const InventarioPage()),
-    );
+  // Método para obtener el nombre de usuario
+  String getUsername() {
+    return _username;
   }
 
-  // Función para navegar a la vista de reportes
-  void irAReportes(BuildContext context) {
+  // Método para navegar al menú pasando el usuario
+  void irAMenu(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ReportePage()),
+      MaterialPageRoute(
+        builder: (context) => Menu(username: _username),
+      ),
     );
   }
 }

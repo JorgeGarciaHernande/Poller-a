@@ -182,7 +182,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   // Redirigir al Menú Principal
   Navigator.pushReplacement(
     context,
-    MaterialPageRoute(builder: (context) => const Menu()),
+    MaterialPageRoute(builder: (context) => const Menu(username: '',)),
   );
 }
 
