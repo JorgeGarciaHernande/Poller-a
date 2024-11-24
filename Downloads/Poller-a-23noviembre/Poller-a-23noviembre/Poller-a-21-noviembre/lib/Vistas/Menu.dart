@@ -7,9 +7,10 @@ import '/Vistas/Clientes.dart';
 import '/Vistas/comida.dart';
 
 class Menu extends StatelessWidget {
+  final String usuario;
   final String role;
 
-  const Menu({super.key, required this.role});
+  const Menu({super.key, required this.usuario, required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +39,14 @@ class Menu extends StatelessWidget {
                 context,
                 label: 'Ventas',
                 icon: Icons.shopping_cart,
-                targetPage: const Ventas(),
+                targetPage: Ventas(usuario: usuario, role: role),
               ),
               if (role == 'admin')
                 _buildMenuButton(
                   context,
                   label: 'Inventario',
                   icon: Icons.inventory,
-                  targetPage: const InventarioPage(),
+                  targetPage: InventarioPage(usuario: usuario, role: role), // Argumentos añadidos
                 ),
               if (role == 'admin')
                 _buildMenuButton(

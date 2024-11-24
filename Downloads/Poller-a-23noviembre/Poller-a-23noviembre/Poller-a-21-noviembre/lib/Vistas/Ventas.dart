@@ -4,7 +4,10 @@ import 'package:polleriaproyecto/Controladores/carrito_controller.dart';
 import 'package:polleriaproyecto/Vistas/carritoview.dart';
 
 class Ventas extends StatefulWidget {
-  const Ventas({Key? key}) : super(key: key);
+  final String usuario; // Usuario actual
+  final String role; // Rol del usuario
+
+  const Ventas({Key? key, required this.usuario, required this.role}) : super(key: key);
 
   @override
   _VentasState createState() => _VentasState();
@@ -57,7 +60,9 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
       MaterialPageRoute(
         builder: (context) => CarritoPage(
           carritoController: _carritoController,
-          atendio: 'Empleado Actual', // Cambia a la lógica para obtener el usuario actual
+          atendio: widget.usuario, // Usuario actual como el que atiende
+          usuario: widget.usuario, // Pasar usuario
+          role: widget.role, // Pasar rol
         ),
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
- import 'package:polleriaproyecto/Vistas/Menu.dart';
- import '/Controladores/logincontrolador.dart'; // Asegúrate de tener esta vista creada
-
+import '/Vistas/Menu.dart';
+import '/Controladores/logincontrolador.dart'; // Asegúrate de tener esta vista creada
 
 void main() {
   runApp(const MyApp());
@@ -49,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Image.network(
-          '', // Reemplaza con la URL de tu logo
+          'https://scontent.ftam1-1.fna.fbcdn.net/v/t39.30808-6/304894260_6181916228504359_5480582647389094077_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG-IzKi4tPSXKocZWJzW6cnN3RKNYxXfhk3dEo1jFd-GR5tquuxfWUySO8Fd0zD5MA7PnchGLEavw2L3s0dLnby&_nc_ohc=LwSAr99rY8AQ7kNvgGYtZFh&_nc_zt=23&_nc_ht=scontent.ftam1-1.fna&_nc_gid=Abg7HPSGKCY9_Urg__EA4F-&oh=00_AYD_U8IrzIB6jBF42wU5hYWISmrY4kN84TyevS4f9Vxrgg&oe=6746FFDF', // Imagen del pollo
           width: 200,
           height: 200,
         ),
@@ -67,7 +66,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _showLoginFields = false;
-  bool _isUserRegistered = true; // Cambia esta variable según tu lógica
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -78,33 +76,33 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
- void _validateUser() async {
-  final username = _emailController.text.trim();
-  final password = _passwordController.text.trim();
+  Future<void> _validateUser() async {
+    final username = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-  if (username.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Por favor, complete todos los campos.")),
-    );
-    return;
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor, complete todos los campos.")),
+      );
+      return;
+    }
+
+    final role = await AuthService().verificarUsuario(username, password);
+
+    if (role != null) {
+      // Si el usuario es válido, navega a Menu y pasa los argumentos requeridos
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Menu(role: role, usuario: username),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Usuario o contraseña incorrectos.")),
+      );
+    }
   }
-
-  final role = await AuthService().verificarUsuario(username, password);
-
-  if (role != null) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => Menu(role: role)),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Usuario o contraseña incorrectos.")),
-    );
-  }
-}
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +119,7 @@ class _LoginPageState extends State<LoginPage> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://scontent.ftam1-1.fna.fbcdn.net/v/t39.30808-6/304894260_6181916228504359_5480582647389094077_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG-IzKi4tPSXKocZWJzW6cnN3RKNYxXfhk3dEo1jFd-GR5tquuxfWUySO8Fd0zD5MA7PnchGLEavw2L3s0dLnby&_nc_ohc=LwSAr99rY8AQ7kNvgGYtZFh&_nc_zt=23&_nc_ht=scontent.ftam1-1.fna&_nc_gid=Abg7HPSGKCY9_Urg__EA4F-&oh=00_AYD_U8IrzIB6jBF42wU5hYWISmrY4kN84TyevS4f9Vxrgg&oe=6746FFDF',
+                  'https://scontent.ftam1-1.fna.fbcdn.net/v/t39.30808-6/304894260_6181916228504359_5480582647389094077_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG-IzKi4tPSXKocZWJzW6cnN3RKNYxXfhk3dEo1jFd-GR5tquuxfWUySO8Fd0zD5MA7PnchGLEavw2L3s0dLnby&_nc_ohc=LwSAr99rY8AQ7kNvgGYtZFh&_nc_zt=23&_nc_ht=scontent.ftam1-1.fna&_nc_gid=Abg7HPSGKCY9_Urg__EA4F-&oh=00_AYD_U8IrzIB6jBF42wU5hYWISmrY4kN84TyevS4f9Vxrgg&oe=6746FFDF', // Imagen del pollo como fondo
                 ),
                 fit: BoxFit.cover,
               ),

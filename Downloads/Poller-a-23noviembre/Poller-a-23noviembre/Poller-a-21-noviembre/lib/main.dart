@@ -2,52 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
-import 'Vistas/loginview.dart'; // Asegúrate de tener esta vista creada
+import 'Vistas/loginview.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    // Inicializa Firebase
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Verificar o crear la colección necesaria para las ventas diarias
-  await verificarOCrearVentasDiarias();
+    // Verificar o crear la colección necesaria para las ventas diarias
+    await verificarOCrearVentasDiarias();
 
-  // Crear usuarios (administrador y empleado) si no existen
-  await crearUsuariosPredeterminados();
+    // Crear usuarios predeterminados (administrador y empleado) si no existen
+    await crearUsuariosPredeterminados();
 
-  runApp(const MainApp(autorizado: true));
+    // Ejecutar la aplicación
+    runApp(const MainApp());
+  } catch (e) {
+    print("Error durante la inicialización de Firebase: $e");
+  }
 }
 
 class MainApp extends StatelessWidget {
-  final bool autorizado;
-
-  const MainApp({super.key, required this.autorizado});
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: autorizado
-          ? const LoginPage() // Cambiado a la clase LoginPage
-          : Scaffold(
-              body: Container(
-                color:
-                    const Color.fromARGB(255, 250, 187, 14), // Fondo amarillo
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 200,
-                        height: 200,
-                        child: Image.asset('imagenes/logo pollos chava.png'),
-                      ),
-                      const SizedBox(
-                          height: 20), // Espacio entre el cuadrado y el texto
-                    ],
-                  ),
-                ),
-              ),
-            ), // Si no está autorizado, muestra un mensaje de error
+      home: const LoginPage(), // Pantalla inicial: LoginPage
     );
   }
 }
@@ -55,19 +38,19 @@ class MainApp extends StatelessWidget {
 // Función para verificar o crear la colección `ventas_diarias`
 Future<void> verificarOCrearVentasDiarias() async {
   try {
-    CollectionReference ventasDiarias =
+    final CollectionReference ventasDiarias =
         FirebaseFirestore.instance.collection('ventas_diarias');
 
-    QuerySnapshot snapshot = await ventasDiarias.get();
+    final QuerySnapshot snapshot = await ventasDiarias.get();
 
     if (snapshot.docs.isEmpty) {
       print("La colección `ventas_diarias` está vacía. Inicializando...");
-      await ventasDiarias.doc('ejemplo').set({
+      await ventasDiarias.doc('registro_inicial').set({
         'fecha': DateTime.now().toIso8601String(),
         'ganancia_total': 0.0,
         'productos': {},
       });
-      print("Colección `ventas_diarias` inicializada.");
+      print("Colección `ventas_diarias` inicializada correctamente.");
     } else {
       print("La colección `ventas_diarias` ya existe.");
     }
@@ -79,11 +62,11 @@ Future<void> verificarOCrearVentasDiarias() async {
 // Función para crear usuarios predeterminados (admin y empleado)
 Future<void> crearUsuariosPredeterminados() async {
   try {
-    CollectionReference usuarios =
+    final CollectionReference usuarios =
         FirebaseFirestore.instance.collection('usuarios');
 
-    // Verificar y crear usuario administrador
-    QuerySnapshot adminSnapshot = await usuarios
+    // Crear usuario administrador si no existe
+    final QuerySnapshot adminSnapshot = await usuarios
         .where('username', isEqualTo: 'admin')
         .limit(1)
         .get();
@@ -92,7 +75,7 @@ Future<void> crearUsuariosPredeterminados() async {
       print("Creando usuario administrador...");
       await usuarios.add({
         'username': 'admin',
-        'password': 'admin123', // Cambia esta contraseña según tu preferencia
+        'password': 'admin123', // Contraseña predeterminada
         'role': 'admin',
       });
       print("Usuario administrador creado con éxito.");
@@ -100,8 +83,8 @@ Future<void> crearUsuariosPredeterminados() async {
       print("El usuario administrador ya existe.");
     }
 
-    // Verificar y crear usuario empleado
-    QuerySnapshot empleadoSnapshot = await usuarios
+    // Crear usuario empleado si no existe
+    final QuerySnapshot empleadoSnapshot = await usuarios
         .where('username', isEqualTo: 'empleado')
         .limit(1)
         .get();
@@ -110,7 +93,7 @@ Future<void> crearUsuariosPredeterminados() async {
       print("Creando usuario empleado...");
       await usuarios.add({
         'username': 'empleado',
-        'password': 'empleado123', // Cambia esta contraseña según tu preferencia
+        'password': 'empleado123', // Contraseña predeterminada
         'role': 'empleado',
       });
       print("Usuario empleado creado con éxito.");
