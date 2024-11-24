@@ -3,7 +3,10 @@ import '/Controladores/Inventario_controlador.dart'; // Asegúrate de que la rut
 import 'Ventas.dart'; // Importa la vista de ventas
 
 class InventarioPage extends StatefulWidget {
-  const InventarioPage({super.key});
+  final String usuario;
+  final String role;
+
+  const InventarioPage({Key? key, required this.usuario, required this.role}) : super(key: key);
 
   @override
   _InventarioPageState createState() => _InventarioPageState();
@@ -24,8 +27,7 @@ class _InventarioPageState extends State<InventarioPage> {
 
   // Función para cargar productos desde Firestore
   Future<void> _cargarProductos() async {
-    List<Map<String, dynamic>> productos =
-        await _inventoryService.obtenerProductos();
+    List<Map<String, dynamic>> productos = await _inventoryService.obtenerProductos();
     setState(() {
       _items = productos;
     });
@@ -41,7 +43,6 @@ class _InventarioPageState extends State<InventarioPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Campo para nombre del producto
             TextField(
               controller: _nombreController,
               decoration: const InputDecoration(
@@ -50,7 +51,6 @@ class _InventarioPageState extends State<InventarioPage> {
               ),
             ),
             const SizedBox(height: 12),
-            // Campo para precio
             TextField(
               controller: _precioController,
               decoration: const InputDecoration(
@@ -60,7 +60,6 @@ class _InventarioPageState extends State<InventarioPage> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
-            // Campo para URL de imagen
             TextField(
               controller: _imageUrlController,
               decoration: const InputDecoration(
@@ -73,11 +72,9 @@ class _InventarioPageState extends State<InventarioPage> {
         actions: [
           TextButton(
             onPressed: () async {
-              // Verifica si todos los campos están llenos
               if (_nombreController.text.isNotEmpty &&
                   _precioController.text.isNotEmpty &&
                   _imageUrlController.text.isNotEmpty) {
-                // Agregar producto
                 await _inventoryService.agregarProducto(
                   nombre: _nombreController.text,
                   precio: double.tryParse(_precioController.text) ?? 0.0,
@@ -87,13 +84,12 @@ class _InventarioPageState extends State<InventarioPage> {
                 _precioController.clear();
                 _imageUrlController.clear();
                 setState(() {
-                  _cargarProductos(); // Recargar productos después de agregar uno nuevo
+                  _cargarProductos();
                 });
-                Navigator.of(context).pop(); // Cerrar el diálogo
+                Navigator.of(context).pop();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Por favor, completa todos los campos')),
+                  const SnackBar(content: Text('Por favor, completa todos los campos')),
                 );
               }
             },
@@ -101,7 +97,6 @@ class _InventarioPageState extends State<InventarioPage> {
           ),
           TextButton(
             onPressed: () {
-              // Cerrar el diálogo sin agregar producto
               Navigator.of(context).pop();
             },
             child: const Text('Cancelar'),
@@ -118,8 +113,7 @@ class _InventarioPageState extends State<InventarioPage> {
   }
 
   // Muestra opciones para editar o eliminar un producto
-  void _mostrarOpcionesProducto(
-      String id, String nombre, double precio, String? imageUrl) {
+  void _mostrarOpcionesProducto(String id, String nombre, double precio, String? imageUrl) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -129,7 +123,6 @@ class _InventarioPageState extends State<InventarioPage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // Aquí puedes añadir la funcionalidad de editar si lo necesitas
             },
             child: const Text('Editar'),
           ),
@@ -171,7 +164,7 @@ class _InventarioPageState extends State<InventarioPage> {
                   margin: const EdgeInsets.only(right: 10),
                   width: 50,
                   height: 50,
-                  child: Image.network('https://via.placeholder.com/150'), // Reemplaza esto por una URL de imagen real si la tienes
+                  child: Image.network('https://via.placeholder.com/150'),
                 ),
               ],
             ),
@@ -182,12 +175,10 @@ class _InventarioPageState extends State<InventarioPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            // Cuadrícula de productos
             Expanded(
               child: _items.isNotEmpty
                   ? GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
                         mainAxisSpacing: 10,
                         crossAxisSpacing: 10,
@@ -212,15 +203,14 @@ class _InventarioPageState extends State<InventarioPage> {
                               children: [
                                 Expanded(
                                   child: Image.network(
-                                    item['imagen'] ?? 'https://via.placeholder.com/150', // Solo URL de imagen
+                                    item['imagen'] ?? 'https://via.placeholder.com/150',
                                     fit: BoxFit.cover,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   item['Nombre'] ?? 'Producto sin nombre',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                 ),
                                 Text(
@@ -236,7 +226,6 @@ class _InventarioPageState extends State<InventarioPage> {
                   : const Center(child: Text("No hay productos")),
             ),
             const SizedBox(height: 8),
-            // Botones para añadir producto e ir a ventas
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -245,14 +234,12 @@ class _InventarioPageState extends State<InventarioPage> {
                   icon: const Icon(Icons.add),
                   label: const Text('Añadir Producto'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green, // Color de fondo
-                    foregroundColor: Colors.white, // Color del texto
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12), // Bordes redondeados
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -260,21 +247,19 @@ class _InventarioPageState extends State<InventarioPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              const Ventas()), // Navega a la vista de ventas
+                        builder: (context) => Ventas(usuario: widget.usuario, role: widget.role),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.shopping_cart),
                   label: const Text('Ir a Ventas'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Color de fondo
-                    foregroundColor: Colors.white, // Color del texto
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12), // Bordes redondeados
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
               ],

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:polleriaproyecto/Controladores/carrito_controller.dart';
-import 'package:polleriaproyecto/Vistas/compra.dart';
+import '/Controladores/carrito_controller.dart';
+import '/Vistas/compra.dart';
 
 class CarritoPage extends StatelessWidget {
   final CarritoController carritoController;
   final String atendio; // Usuario que realiza la compra
+  final String usuario;
+  final String role;
 
   const CarritoPage({
     required this.carritoController,
-    required this.atendio, // Recibimos el nombre del usuario
+    required this.atendio,
+    required this.usuario,
+    required this.role,
     Key? key,
   }) : super(key: key);
 
@@ -193,6 +197,8 @@ class CarritoPage extends StatelessWidget {
                       builder: (context) => CheckoutPage(
                         productos: productos,
                         atendio: atendio,
+                        usuario: usuario,
+                        role: role,
                       ),
                     ),
                   );

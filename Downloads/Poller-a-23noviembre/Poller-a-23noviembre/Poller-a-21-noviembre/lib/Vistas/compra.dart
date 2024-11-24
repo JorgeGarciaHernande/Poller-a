@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:polleriaproyecto/Controladores/Ventascontrolador.dart';
-import 'package:polleriaproyecto/Controladores/clientes_controller.dart';
-import 'package:polleriaproyecto/Vistas/Menu.dart';
+import '/Controladores/Ventascontrolador.dart';
+import '/Controladores/clientes_controller.dart';
+import '/Vistas/Menu.dart';
 
 class CheckoutPage extends StatefulWidget {
   final List<Map<String, dynamic>> productos;
   final String atendio; // Usuario que realizó la venta
+  final String usuario;
+  final String role;
 
-  const CheckoutPage({Key? key, required this.productos, required this.atendio}) : super(key: key);
+  const CheckoutPage({
+    Key? key,
+    required this.productos,
+    required this.atendio,
+    required this.usuario,
+    required this.role,
+  }) : super(key: key);
 
   @override
   _CheckoutPageState createState() => _CheckoutPageState();
@@ -75,8 +83,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
     }
 
-    // Llama a confirmarVenta con el campo atendio
-    await _ventaController.confirmarVenta(atendio: widget.atendio);
+    // Llama a confirmarVenta con los argumentos requeridos
+    await _ventaController.confirmarVenta(
+      context: context,
+      atendio: widget.atendio,
+      role: widget.role,
+      usuario: widget.usuario,
+    );
 
     setState(() {
       clienteSeleccionado = null;
@@ -92,7 +105,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const Menu(role: 'empleado')),
+      MaterialPageRoute(builder: (context) => Menu(usuario: widget.usuario, role: widget.role)),
     );
   }
 
@@ -184,7 +197,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: ListView(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     children: widget.productos.isEmpty
                         ? [const ListTile(title: Text('No hay productos en el carrito'))]
                         : widget.productos.map((producto) {

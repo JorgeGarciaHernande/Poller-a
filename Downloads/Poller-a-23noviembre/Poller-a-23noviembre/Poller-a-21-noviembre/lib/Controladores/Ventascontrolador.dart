@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import '../Vistas/Menu.dart';
 
 class VentaController {
   final CollectionReference ventas = FirebaseFirestore.instance.collection('ventas');
@@ -52,17 +54,24 @@ class VentaController {
   }
 
   /// Confirmar y registrar la venta en Firestore
-  Future<void> confirmarVenta({required String atendio}) async {
+  Future<void> confirmarVenta({
+    required BuildContext context,
+    required String atendio,
+    required String role,
+    required String usuario, // Se agrega el parámetro usuario
+  }) async {
     try {
       if (_productosSeleccionados.isEmpty) {
-        print("No hay productos en el carrito.");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No hay productos en el carrito.")),
+        );
         return;
       }
 
       List<Map<String, dynamic>> carrito = [];
       double totalVenta = 0;
+      String notaGeneral = ""; // Variable para almacenar las notas concatenadas
 
-      // Procesar los productos del carrito
       for (var producto in _productosSeleccionados) {
         double subtotal = producto['precioProducto'] * producto['cantidad'];
         totalVenta += subtotal;
@@ -73,26 +82,34 @@ class VentaController {
           'precioProducto': producto['precioProducto'],
           'cantidad': producto['cantidad'],
           'subtotal': subtotal,
-          'nota': producto['nota'] ?? '', // Nota individual del producto
+          'nota': producto['nota'] ?? '',
         });
+
+        // Concatenar la nota del producto a la nota general
+        if (producto['nota'] != null && producto['nota'].isNotEmpty) {
+          notaGeneral += "${producto['nombreProducto']}: ${producto['nota']} \n";
+        }
       }
 
-      // Concatenar todas las notas para crear una nota general
-      String notasGenerales = carrito.map((producto) {
-        return "${producto['nombreProducto']}: ${producto['nota']}";
-      }).join('; ');
-
-      // Registrar la venta completa en Firestore
+      // Registrar carrito completo en Firestore
       await ventas.add({
-        'carrito': carrito, // Lista completa de productos
+        'carrito': carrito, // Agregar todos los productos del carrito
         'total': totalVenta,
-        'fecha': FieldValue.serverTimestamp(), // Fecha actual
-        'atendio': atendio, // Usuario que atendió
-        'notasGenerales': notasGenerales, // Notas concatenadas
+        'notaGeneral': notaGeneral.trim(), // Eliminar espacios o saltos de línea innecesarios
+        'fecha': FieldValue.serverTimestamp(), // Fecha de la venta
+        'atendio': atendio, // Nombre del usuario que atendió
       });
 
-      _productosSeleccionados.clear(); // Limpiar carrito temporal
+      _productosSeleccionados.clear(); // Limpiar el carrito
       print("Venta confirmada y registrada exitosamente.");
+
+      // Redirigir al menú principal, pasando usuario y role
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Menu(usuario: usuario, role: role),
+        ),
+      );
     } catch (e) {
       print("Error al registrar la venta: $e");
     }
@@ -152,7 +169,7 @@ class VentaController {
       QuerySnapshot snapshot = await ventas.get();
       double totalVentas = snapshot.docs.fold(0.0, (sum, doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return sum + (data['total'] as num).toDouble(); // Conversión explícita a double
+        return sum + (data['total'] as double);
       });
       print("Resumen de ventas obtenido: $totalVentas");
       return totalVentas;
