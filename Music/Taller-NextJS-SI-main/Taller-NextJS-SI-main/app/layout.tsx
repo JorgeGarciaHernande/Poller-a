@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gestión de Notas",
-  description: "Plataforma para gestión de notas de Jorge", // Cambié 'estudiantes' por 'Jorge'
+  title: "Gestión De Notas",
+  description: "Plataforma para gestión de notas De Jorge", // Cambié 'estudiantes' por 'Jorge'
 };
 
 export default function RootLayout({
