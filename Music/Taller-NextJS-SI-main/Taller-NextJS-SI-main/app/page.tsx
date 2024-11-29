@@ -47,16 +47,14 @@ export default function Home() {
         const newNote = {
             title: "",
             content: "",
-            category: 1, // Default category: "Ideas"
-            created_at: new Date().toISOString(), // Supabase requires ISO string format
-            status: 0, // Default status
+            category: 1,
+            created_at: new Date().toISOString(), 
+            status: 0,
         };
 
-        // Optimistic update: Add note locally before confirming with Supabase
-        const temporaryId = Math.random(); // Temporary ID for local tracking
+        const temporaryId = Math.random();
         setNotes([{ id: temporaryId, ...newNote, created_at: new Date() }, ...notes]);
 
-        // Save to Supabase
         const { data, error } = await supabase
             .from("notes")
             .insert(newNote)
@@ -65,12 +63,10 @@ export default function Home() {
 
         if (error) {
             console.error("Error adding note to Supabase:", error.message);
-            // Revert optimistic update
             setNotes((currentNotes) =>
                 currentNotes.filter((note) => note.id !== temporaryId)
             );
         } else if (data) {
-            // Replace temporary note with the one from Supabase
             setNotes((currentNotes) =>
                 currentNotes.map((note) =>
                     note.id === temporaryId
