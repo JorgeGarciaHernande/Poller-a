@@ -16,7 +16,7 @@ class TicketsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tickets'),
+        title: const Text('Pollos Chava'),
         centerTitle: true,
         backgroundColor: Colors.orange,
       ),

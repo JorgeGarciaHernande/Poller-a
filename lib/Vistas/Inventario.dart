@@ -6,7 +6,8 @@ class InventarioPage extends StatefulWidget {
   final String usuario;
   final String role;
 
-  const InventarioPage({Key? key, required this.usuario, required this.role}) : super(key: key);
+  const InventarioPage({Key? key, required this.usuario, required this.role})
+      : super(key: key);
 
   @override
   _InventarioPageState createState() => _InventarioPageState();
@@ -17,6 +18,8 @@ class _InventarioPageState extends State<InventarioPage> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _precioController = TextEditingController();
   final TextEditingController _imageUrlController = TextEditingController();
+  final TextEditingController _cantidadController = TextEditingController();
+  final TextEditingController _usarCantidadController = TextEditingController();
   List<Map<String, dynamic>> _items = [];
 
   @override
@@ -27,7 +30,8 @@ class _InventarioPageState extends State<InventarioPage> {
 
   // Función para cargar productos desde Firestore
   Future<void> _cargarProductos() async {
-    List<Map<String, dynamic>> productos = await _inventoryService.obtenerProductos();
+    List<Map<String, dynamic>> productos =
+        await _inventoryService.obtenerProductos();
     setState(() {
       _items = productos;
     });
@@ -77,7 +81,7 @@ class _InventarioPageState extends State<InventarioPage> {
                   _imageUrlController.text.isNotEmpty) {
                 await _inventoryService.agregarProducto(
                   nombre: _nombreController.text,
-                  precio: double.tryParse(_precioController.text) ?? 0.0,
+                  cantidad: int.tryParse(_precioController.text) ?? 0,
                   imageUrl: _imageUrlController.text,
                 );
                 _nombreController.clear();
@@ -89,7 +93,82 @@ class _InventarioPageState extends State<InventarioPage> {
                 Navigator.of(context).pop();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Por favor, completa todos los campos')),
+                  const SnackBar(
+                      content: Text('Por favor, completa todos los campos')),
+                );
+              }
+            },
+            child: const Text('Agregar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Función para abrir el cuadro de diálogo para ingresar el nombre, cantidad y URL de la imagen
+  Future<void> _abrirDialogoAgregarProductoInventario() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Añadir Producto al Inventario'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nombreController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del producto',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _cantidadController,
+              decoration: const InputDecoration(
+                labelText: 'Cantidad por lote',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _imageUrlController,
+              decoration: const InputDecoration(
+                labelText: 'URL de la imagen',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (_nombreController.text.isNotEmpty &&
+                  _cantidadController.text.isNotEmpty &&
+                  _imageUrlController.text.isNotEmpty) {
+                await _inventoryService.agregarProducto(
+                  nombre: _nombreController.text,
+                  cantidad: int.tryParse(_cantidadController.text) ?? 0,
+                  imageUrl: _imageUrlController.text,
+                );
+                _nombreController.clear();
+                _cantidadController.clear();
+                _imageUrlController.clear();
+                setState(() {
+                  _cargarProductos();
+                });
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Por favor, completa todos los campos')),
                 );
               }
             },
@@ -112,8 +191,71 @@ class _InventarioPageState extends State<InventarioPage> {
     _cargarProductos();
   }
 
-  // Muestra opciones para editar o eliminar un producto
-  void _mostrarOpcionesProducto(String id, String nombre, double precio, String? imageUrl) {
+  // Función para usar una cantidad del producto
+  Future<void> _usarProducto(String id, int cantidadActual) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Usar Producto'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _usarCantidadController,
+              decoration: const InputDecoration(
+                labelText: 'Cantidad a usar',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (_usarCantidadController.text.isNotEmpty) {
+                int cantidadUsar =
+                    int.tryParse(_usarCantidadController.text) ?? 0;
+                int nuevaCantidad = cantidadActual - cantidadUsar;
+                if (nuevaCantidad >= 0) {
+                  await _inventoryService.usarProducto(
+                    id: id,
+                    cantidadUsar: cantidadUsar,
+                  );
+                  _usarCantidadController.clear();
+                  setState(() {
+                    _cargarProductos();
+                  });
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Cantidad inexistente.')),
+                  );
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Por favor, ingresa una cantidad')),
+                );
+              }
+            },
+            child: const Text('Usar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Muestra opciones para editar, eliminar o usar un producto
+  void _mostrarOpcionesProducto(
+      String id, String nombre, int cantidad, String? imageUrl) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -123,6 +265,7 @@ class _InventarioPageState extends State<InventarioPage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
+              _abrirDialogoEditarProducto(id, nombre, cantidad, imageUrl);
             },
             child: const Text('Editar'),
           ),
@@ -132,6 +275,93 @@ class _InventarioPageState extends State<InventarioPage> {
               _eliminarProducto(id);
             },
             child: const Text('Eliminar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _usarProducto(id, cantidad);
+            },
+            child: const Text('Usar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Función para abrir el cuadro de diálogo para editar un producto
+  Future<void> _abrirDialogoEditarProducto(
+      String id, String nombre, int cantidad, String? imageUrl) async {
+    _nombreController.text = nombre;
+    _cantidadController.text = cantidad.toString();
+    _imageUrlController.text = imageUrl ?? '';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Producto'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nombreController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del producto',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _cantidadController,
+              decoration: const InputDecoration(
+                labelText: 'Cantidad por lote',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _imageUrlController,
+              decoration: const InputDecoration(
+                labelText: 'URL de la imagen',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              if (_nombreController.text.isNotEmpty &&
+                  _cantidadController.text.isNotEmpty &&
+                  _imageUrlController.text.isNotEmpty) {
+                await _inventoryService.editarProducto(
+                  id: id,
+                  nombre: _nombreController.text,
+                  cantidad: int.tryParse(_cantidadController.text) ?? 0,
+                  imageUrl: _imageUrlController.text,
+                );
+                _nombreController.clear();
+                _cantidadController.clear();
+                _imageUrlController.clear();
+                setState(() {
+                  _cargarProductos();
+                });
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Por favor, completa todos los campos')),
+                );
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancelar'),
           ),
         ],
       ),
@@ -178,7 +408,8 @@ class _InventarioPageState extends State<InventarioPage> {
             Expanded(
               child: _items.isNotEmpty
                   ? GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
                         mainAxisSpacing: 10,
                         crossAxisSpacing: 10,
@@ -192,7 +423,7 @@ class _InventarioPageState extends State<InventarioPage> {
                             _mostrarOpcionesProducto(
                               item['id'],
                               item['Nombre'] ?? 'Producto sin nombre',
-                              item['precio'] ?? 0.0,
+                              item['cantidad'] ?? 0,
                               item['imagen'],
                             );
                           },
@@ -203,20 +434,33 @@ class _InventarioPageState extends State<InventarioPage> {
                               children: [
                                 Expanded(
                                   child: Image.network(
-                                    item['imagen'] ?? 'https://via.placeholder.com/150',
+                                    item['imagen'] ??
+                                        'https://via.placeholder.com/150',
                                     fit: BoxFit.cover,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   item['Nombre'] ?? 'Producto sin nombre',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                 ),
                                 Text(
-                                  '\$${(item['precio'] ?? 0.0).toStringAsFixed(2)}',
+                                  'Cantidad: ${(item['cantidad'] ?? 0).toString()}',
                                   style: const TextStyle(color: Colors.green),
                                 ),
+                                if (item['cantidad'] <= 10 &&
+                                    item['cantidad'] > 0)
+                                  const Text(
+                                    'Producto casi agotado',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                if (item['cantidad'] == 0)
+                                  const Text(
+                                    'Producto agotado',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
                               ],
                             ),
                           ),
@@ -239,7 +483,8 @@ class _InventarioPageState extends State<InventarioPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -247,7 +492,8 @@ class _InventarioPageState extends State<InventarioPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Ventas(usuario: widget.usuario, role: widget.role),
+                        builder: (context) =>
+                            Ventas(usuario: widget.usuario, role: widget.role),
                       ),
                     );
                   },
@@ -259,10 +505,26 @@ class _InventarioPageState extends State<InventarioPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: _abrirDialogoAgregarProductoInventario,
+              icon: const Icon(Icons.add_box),
+              label: const Text('Añadir Producto al Inventario'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
             ),
             const SizedBox(height: 35),
           ],
