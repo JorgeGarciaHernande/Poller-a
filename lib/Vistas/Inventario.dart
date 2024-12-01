@@ -230,7 +230,8 @@ class _InventarioPageState extends State<InventarioPage> {
                   Navigator.of(context).pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Cantidad inexistente.')),
+                    const SnackBar(
+                        content: Text('Cantidad inexistente, favor verificar')),
                   );
                 }
               } else {
@@ -427,42 +428,68 @@ class _InventarioPageState extends State<InventarioPage> {
                               item['imagen'],
                             );
                           },
-                          child: Card(
-                            color: Colors.yellow.shade200,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: Image.network(
-                                    item['imagen'] ??
-                                        'https://via.placeholder.com/150',
-                                    fit: BoxFit.cover,
+                          child: Stack(
+                            children: [
+                              Card(
+                                color: Colors.yellow.shade200,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: Image.network(
+                                        item['imagen'] ??
+                                            'https://via.placeholder.com/150',
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      item['Nombre'] ?? 'Producto sin nombre',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    Text(
+                                      'Cantidad: ${(item['cantidad'] ?? 0).toString()}',
+                                      style:
+                                          const TextStyle(color: Colors.green),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (item['cantidad'] <= 10 &&
+                                  item['cantidad'] > 0)
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    color: Colors.red.withOpacity(0.7),
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Text(
+                                      'Producto casi agotado, hay ${item['cantidad']} unidades',
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  item['Nombre'] ?? 'Producto sin nombre',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  'Cantidad: ${(item['cantidad'] ?? 0).toString()}',
-                                  style: const TextStyle(color: Colors.green),
-                                ),
-                                if (item['cantidad'] <= 10 &&
-                                    item['cantidad'] > 0)
-                                  const Text(
-                                    'Producto casi agotado',
-                                    style: TextStyle(color: Colors.red),
+                              if (item['cantidad'] == 0)
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    color: Colors.red.withOpacity(0.7),
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: const Text(
+                                      'Producto agotado',
+                                      style: TextStyle(color: Colors.white),
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
-                                if (item['cantidad'] == 0)
-                                  const Text(
-                                    'Producto agotado',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
                         );
                       },
