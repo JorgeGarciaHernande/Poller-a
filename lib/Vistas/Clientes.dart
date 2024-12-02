@@ -34,10 +34,12 @@ class _ClientesPageState extends State<ClientesPage> {
 
   // Cargar todos los clientes
   Future<void> _cargarClientes() async {
-    List<Map<String, dynamic>> clientes = await _clientesController.obtenerClientes();
+    List<Map<String, dynamic>> clientes =
+        await _clientesController.obtenerClientes();
     setState(() {
       _clientes = clientes;
-      _clientesFiltrados = clientes; // Inicializamos la lista de filtrados con todos los clientes
+      _clientesFiltrados =
+          clientes; // Inicializamos la lista de filtrados con todos los clientes
     });
   }
 
@@ -45,19 +47,23 @@ class _ClientesPageState extends State<ClientesPage> {
   Future<void> _buscarCliente() async {
     String telefono = _busquedaController.text.trim();
     if (telefono.isNotEmpty) {
-      List<Map<String, dynamic>> clientes = await _clientesController.buscarClientePorTelefono(telefono);
+      List<Map<String, dynamic>> clientes =
+          await _clientesController.buscarClientePorTelefono(telefono);
       setState(() {
-        _clientesFiltrados = clientes; // Filtramos los clientes según la búsqueda
+        _clientesFiltrados =
+            clientes; // Filtramos los clientes según la búsqueda
       });
     } else {
       setState(() {
-        _clientesFiltrados = _clientes; // Si no hay búsqueda, mostramos todos los clientes
+        _clientesFiltrados =
+            _clientes; // Si no hay búsqueda, mostramos todos los clientes
       });
     }
   }
 
   // Función para agregar un cliente
-  Future<void> _agregarCliente(String nombre, String numeroTelefono, String direccion) async {
+  Future<void> _agregarCliente(
+      String nombre, String numeroTelefono, String direccion) async {
     if (nombre.isEmpty || numeroTelefono.isEmpty || direccion.isEmpty) {
       return;
     }
@@ -98,7 +104,8 @@ class _ClientesPageState extends State<ClientesPage> {
                 ),
                 TextFormField(
                   controller: _telefonoController,
-                  decoration: const InputDecoration(labelText: 'Número de Teléfono'),
+                  decoration:
+                      const InputDecoration(labelText: 'Número de Teléfono'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Este campo es obligatorio';
@@ -122,7 +129,8 @@ class _ClientesPageState extends State<ClientesPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo sin hacer nada
+                Navigator.of(context)
+                    .pop(); // Cerrar el cuadro de diálogo sin hacer nada
               },
               child: const Text('Cancelar'),
             ),
@@ -134,7 +142,8 @@ class _ClientesPageState extends State<ClientesPage> {
                     _telefonoController.text,
                     _direccionController.text,
                   );
-                  Navigator.of(context).pop(); // Cerrar el cuadro de diálogo después de agregar
+                  Navigator.of(context)
+                      .pop(); // Cerrar el cuadro de diálogo después de agregar
                 }
               },
               child: const Text('Agregar'),
@@ -186,25 +195,30 @@ class _ClientesPageState extends State<ClientesPage> {
                     itemBuilder: (context, index) {
                       final cliente = _clientesFiltrados[index];
                       return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 10),
                         elevation: 5,
                         child: ListTile(
                           title: Text(cliente['nombre']),
-                          subtitle: Text('Tel: ${cliente['numero_telefono']}, Dirección: ${cliente['direccion']}'),
-                          leading: const Icon(Icons.account_circle, color: Colors.blue, size: 40),
+                          subtitle: Text(
+                              'Tel: ${cliente['numero_telefono']}, Dirección: ${cliente['direccion']}'),
+                          leading: const Icon(Icons.account_circle,
+                              color: Colors.blue, size: 40),
                           trailing: SizedBox(
                             width: 100,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.blue),
                                   onPressed: () {
                                     // Lógica para editar cliente
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
                                   onPressed: () {
                                     // Lógica para eliminar cliente
                                   },

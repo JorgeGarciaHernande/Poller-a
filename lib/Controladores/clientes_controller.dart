@@ -38,7 +38,8 @@ class ClientesController {
   }
 
   /// Buscar clientes por número de teléfono
-  Future<List<Map<String, dynamic>>> buscarClientePorTelefono(String telefono) async {
+  Future<List<Map<String, dynamic>>> buscarClientePorTelefono(
+      String telefono) async {
     try {
       QuerySnapshot snapshot = await clientes
           .where('numero_telefono', isGreaterThanOrEqualTo: telefono)

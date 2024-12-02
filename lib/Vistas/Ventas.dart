@@ -7,7 +7,8 @@ class Ventas extends StatefulWidget {
   final String usuario; // Usuario actual
   final String role; // Rol del usuario
 
-  const Ventas({Key? key, required this.usuario, required this.role}) : super(key: key);
+  const Ventas({Key? key, required this.usuario, required this.role})
+      : super(key: key);
 
   @override
   _VentasState createState() => _VentasState();
@@ -46,7 +47,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
     _carritoController.agregarProductoAlCarrito(
       idProducto: producto['id'],
       nombreProducto: producto['Nombre'],
-      precioProducto: (producto['precio'] as num).toDouble(), // Conversión explícita a double
+      precioProducto: (producto['precio'] as num)
+          .toDouble(), // Conversión explícita a double
       cantidad: 1,
     );
     ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +180,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
                         const SizedBox(height: 8),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 255, 146, 21),
+                            backgroundColor:
+                                const Color.fromARGB(255, 255, 146, 21),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
