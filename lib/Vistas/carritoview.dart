@@ -51,7 +51,8 @@ class _CarritoPageState extends State<CarritoPage> {
             child: AnimatedBuilder(
               animation: widget.carritoController,
               builder: (context, _) {
-                final productos = widget.carritoController.obtenerProductosSeleccionados();
+                final productos =
+                    widget.carritoController.obtenerProductosSeleccionados();
                 return productos.isEmpty
                     ? const Center(
                         child: Text('El carrito está vacío'),
@@ -61,7 +62,8 @@ class _CarritoPageState extends State<CarritoPage> {
                         itemBuilder: (context, index) {
                           final producto = productos[index];
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 4.0),
                             child: Card(
                               elevation: 3,
                               child: ListTile(
@@ -72,61 +74,85 @@ class _CarritoPageState extends State<CarritoPage> {
                                     width: 50, // Reduced width
                                     height: 50, // Reduced height
                                     fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, loadingProgress) {
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
                                       if (loadingProgress == null) {
                                         return child;
                                       } else {
                                         return Center(
                                           child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    (loadingProgress.expectedTotalBytes ?? 1)
+                                            value: loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                        .cumulativeBytesLoaded /
+                                                    (loadingProgress
+                                                            .expectedTotalBytes ??
+                                                        1)
                                                 : null,
                                           ),
                                         );
                                       }
                                     },
                                     errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error, color: Colors.red);
+                                      return const Icon(Icons.error,
+                                          color: Colors.red);
                                     },
                                   ),
                                 ),
                                 title: Text(
                                   producto['nombreProducto'],
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
                                 ),
-                                subtitle: Text('Cantidad: ${producto['cantidad']}'),
-                                trailing: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      '\$${(producto['precioProducto'] * producto['cantidad']).toStringAsFixed(2)}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.remove, color: Colors.red),
-                                          onPressed: () {
-                                            widget.carritoController.disminuirCantidadProducto(index);
-                                          },
+                                subtitle:
+                                    Text('Cantidad: ${producto['cantidad']}'),
+                                trailing: Container(
+                                  height: 120, // Increased height
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        '\$${(producto['precioProducto'] * producto['cantidad']).toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Flexible(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove,
+                                                  color: Colors.red),
+                                              onPressed: () {
+                                                widget.carritoController
+                                                    .disminuirCantidadProducto(
+                                                        index);
+                                              },
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.add,
+                                                  color: Colors.green),
+                                              onPressed: () {
+                                                widget.carritoController
+                                                    .aumentarCantidadProducto(
+                                                        index);
+                                              },
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.delete,
+                                                  color: Colors.red),
+                                              onPressed: () {
+                                                widget.carritoController
+                                                    .eliminarProductoDelCarrito(
+                                                        index);
+                                              },
+                                            ),
+                                          ],
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.add, color: Colors.green),
-                                          onPressed: () {
-                                            widget.carritoController.aumentarCantidadProducto(index);
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () {
-                                            widget.carritoController.eliminarProductoDelCarrito(index);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -137,7 +163,8 @@ class _CarritoPageState extends State<CarritoPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -150,7 +177,8 @@ class _CarritoPageState extends State<CarritoPage> {
                   builder: (context, _) {
                     return Text(
                       '\$${widget.carritoController.obtenerTotalCarrito().toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     );
                   },
                 ),
@@ -158,7 +186,8 @@ class _CarritoPageState extends State<CarritoPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(

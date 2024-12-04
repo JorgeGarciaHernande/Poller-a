@@ -7,7 +7,6 @@ import '/Vistas/Clientes.dart';
 import '/Vistas/Ticketsview.dart';
 import '/Vistas/Inventario.dart';
 
-
 class TicketsMenu extends StatelessWidget {
   final String usuario;
   final String role;
@@ -18,7 +17,7 @@ class TicketsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tickets'),
+        title: const Text('Pollos Chava'),
         centerTitle: true,
         backgroundColor: Colors.orange,
       ),
@@ -50,8 +49,7 @@ class TicketsMenu extends StatelessWidget {
                   icon: Icons.inventory,
                   targetPage: comida(),
                 ),
-
-                if (role == 'admin')
+              if (role == 'admin')
                 _buildMenuButton(
                   context,
                   label: 'Inventario',

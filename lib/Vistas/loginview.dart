@@ -48,9 +48,26 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Image.network(
-          'https://scontent.ftam1-1.fna.fbcdn.net/v/t39.30808-6/304894260_6181916228504359_5480582647389094077_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG-IzKi4tPSXKocZWJzW6cnN3RKNYxXfhk3dEo1jFd-GR5tquuxfWUySO8Fd0zD5MA7PnchGLEavw2L3s0dLnby&_nc_ohc=LwSAr99rY8AQ7kNvgGYtZFh&_nc_zt=23&_nc_ht=scontent.ftam1-1.fna&_nc_gid=Abg7HPSGKCY9_Urg__EA4F-&oh=00_AYD_U8IrzIB6jBF42wU5hYWISmrY4kN84TyevS4f9Vxrgg&oe=6746FFDF', // Imagen del pollo
+          'https://img3.wallspic.com/previews/9/3/9/4/1/114939/114939-lea-ceniza-hogar-x750.jpg', // Imagen del pollo
           width: 200,
           height: 200,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) {
+              return child;
+            } else {
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          (loadingProgress.expectedTotalBytes ?? 1)
+                      : null,
+                ),
+              );
+            }
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.error, color: Colors.red);
+          },
         ),
       ),
     );
@@ -94,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => TicketsMenu (role: role, usuario: username),
+          builder: (context) => TicketsMenu(role: role, usuario: username),
         ),
       );
     } else {
@@ -119,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://scontent.ftam1-1.fna.fbcdn.net/v/t39.30808-6/304894260_6181916228504359_5480582647389094077_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG-IzKi4tPSXKocZWJzW6cnN3RKNYxXfhk3dEo1jFd-GR5tquuxfWUySO8Fd0zD5MA7PnchGLEavw2L3s0dLnby&_nc_ohc=LwSAr99rY8AQ7kNvgGYtZFh&_nc_zt=23&_nc_ht=scontent.ftam1-1.fna&_nc_gid=Abg7HPSGKCY9_Urg__EA4F-&oh=00_AYD_U8IrzIB6jBF42wU5hYWISmrY4kN84TyevS4f9Vxrgg&oe=6746FFDF', // Imagen del pollo como fondo
+                  'https://img3.wallspic.com/previews/9/3/9/4/1/114939/114939-lea-ceniza-hogar-x750.jpg', // Imagen del pollo como fondo
                 ),
                 fit: BoxFit.cover,
               ),

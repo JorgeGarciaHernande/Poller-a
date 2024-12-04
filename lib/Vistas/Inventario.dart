@@ -81,8 +81,6 @@ class _InventarioPageState extends State<InventarioPage> {
                   _imageUrlController.text.isNotEmpty) {
                 await _inventoryService.agregarProducto(
                   nombre: _nombreController.text,
-                  // Asegúrate de que 'cantidad' se inicializa correctamente aquí.
-                  // Si 'precioController' se usa para la cantidad, cámbialo a _cantidadController
                   cantidad: int.tryParse(_precioController.text) ?? 0,
                   imageUrl: _imageUrlController.text,
                 );
@@ -227,13 +225,13 @@ class _InventarioPageState extends State<InventarioPage> {
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content:
-                            Text('Cantidad inexistente, favor verificar')),
+                        content: Text('Cantidad inexistente, favor verificar')),
                   );
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Por favor, ingresa una cantidad')),
+                  const SnackBar(
+                      content: Text('Por favor, ingresa una cantidad')),
                 );
               }
             },
@@ -381,16 +379,17 @@ class _InventarioPageState extends State<InventarioPage> {
                     Navigator.of(context).pop();
                   },
                 ),
-                const Text(
-                  'Inventario',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      'Inventario',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
-                Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  width: 50,
-                  height: 50,
-                  child: Image.network('https://via.placeholder.com/150'),
-                ),
+                const SizedBox(
+                    width: 48), // To balance the space taken by the back button
               ],
             ),
           ),
@@ -470,7 +469,8 @@ class _InventarioPageState extends State<InventarioPage> {
                                     ),
                                   ),
                                 ),
-                              if (item['cantidad'] != null && item['cantidad'] == 0)
+                              if (item['cantidad'] != null &&
+                                  item['cantidad'] == 0)
                                 Positioned(
                                   bottom: 0,
                                   left: 0,
