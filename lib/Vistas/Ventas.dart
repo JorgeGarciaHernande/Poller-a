@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Importar Font Awesome
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 import '/Controladores/carrito_controller.dart';
 import '/Vistas/carritoview.dart';
 
@@ -8,7 +9,8 @@ class Ventas extends StatefulWidget {
   final String usuario; // Usuario actual
   final String role; // Rol del usuario
 
-  const Ventas({Key? key, required this.usuario, required this.role}) : super(key: key);
+  const Ventas({Key? key, required this.usuario, required this.role})
+      : super(key: key);
 
   @override
   _VentasState createState() => _VentasState();
@@ -22,7 +24,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this); // Incluye 5 pestañas
+    _tabController =
+        TabController(length: 5, vsync: this); // Incluye 5 pestañas
   }
 
   String _getMensajeSegunHora() {
@@ -49,6 +52,7 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
       nombreProducto: producto['Nombre'],
       precioProducto: (producto['precio'] as num).toDouble(),
       cantidad: 1,
+      imagen: producto['imagen'], // Pasar la ruta de la imagen local
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -107,7 +111,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
               indicatorColor: Colors.red,
               labelColor: Colors.red,
               unselectedLabelColor: Colors.black54,
-              labelPadding: const EdgeInsets.symmetric(vertical: 10.0), // Más espacio vertical
+              labelPadding: const EdgeInsets.symmetric(
+                  vertical: 10.0), // Más espacio vertical
               tabs: const [
                 Tab(icon: Icon(Icons.restaurant, size: 28), text: 'Platillos'),
                 Tab(
@@ -119,7 +124,9 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
                 ),
                 Tab(icon: Icon(Icons.fastfood, size: 28), text: 'Hamburguesas'),
                 Tab(icon: Icon(Icons.food_bank, size: 28), text: 'Adicionales'),
-                Tab(icon: Icon(Icons.local_offer, size: 28), text: 'Promociones'),
+                Tab(
+                    icon: Icon(Icons.local_offer, size: 28),
+                    text: 'Promociones'),
               ],
             ),
           ),
@@ -182,8 +189,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12.0),
                       ),
-                      child: Image.network(
-                        producto['imagen'] ?? 'https://via.placeholder.com/150',
+                      child: Image.file(
+                        File(producto['imagen'] ?? 'assets/placeholder.png'),
                         fit: BoxFit.cover,
                         width: double.infinity,
                       ),
@@ -220,7 +227,9 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
                           onPressed: () => _agregarAlCarrito({
                             'id': productos[index].id,
                             'Nombre': producto['Nombre'],
-                            'precio': producto['precio']
+                            'precio': producto['precio'],
+                            'imagen': producto[
+                                'imagen'], // Pasar la ruta de la imagen local
                           }),
                           icon: const Icon(Icons.add_shopping_cart),
                           label: const Text('Agregar'),

@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import '/Controladores/comida_controller.dart'
+    as custom_controller; // Usa un alias para evitar el conflicto de nombres
 
 class comida extends StatefulWidget {
   const comida({Key? key}) : super(key: key);
@@ -11,12 +17,14 @@ class comida extends StatefulWidget {
 class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final custom_controller.MenuController _menuController =
+      custom_controller.MenuController(); // Usa el alias aquí
 
   late TabController _tabController;
   String _nombre = '';
   double _precio = 0.0;
   String _categoria = 'Platillos';
-  String _imagenUrl = '';
+  File? _imagenFile;
 
   @override
   void initState() {
@@ -28,22 +36,88 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        await _firestore.collection('menu').add({
-          'Nombre': _nombre,
-          'precio': _precio,
-          'categoria': _categoria,
-          'imagen': _imagenUrl.isNotEmpty
-              ? _imagenUrl
-              : 'https://via.placeholder.com/150',
-        });
+        String? imagePath;
+        if (_imagenFile != null) {
+          final directory = await getApplicationDocumentsDirectory();
+          final dirPath = path.join(directory.path, 'assets/images');
+          await Directory(dirPath).create(recursive: true);
+          final fileName = path.basename(_imagenFile!.path);
+          final localImage = await _imagenFile!.copy('$dirPath/$fileName');
+          imagePath = localImage.path;
+        }
+
+        await _menuController.agregarComida(
+          nombre: _nombre,
+          precio: _precio,
+          categoria: _categoria,
+          imagenPath: imagePath,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Comida agregada exitosamente.')),
         );
+        setState(() {
+          _imagenFile = null; // Limpiar la imagen después de agregar
+        });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al agregar comida: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _imagenFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _editarComida(String id) async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      try {
+        String? imagePath;
+        if (_imagenFile != null) {
+          final directory = await getApplicationDocumentsDirectory();
+          final dirPath = path.join(directory.path, 'assets/images');
+          await Directory(dirPath).create(recursive: true);
+          final fileName = path.basename(_imagenFile!.path);
+          final localImage = await _imagenFile!.copy('$dirPath/$fileName');
+          imagePath = localImage.path;
+        }
+
+        await _menuController.editarComida(
+          id: id,
+          nombre: _nombre,
+          precio: _precio,
+          categoria: _categoria,
+          imagenPath: imagePath,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Comida editada exitosamente.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al editar comida: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _eliminarComida(String id) async {
+    try {
+      await _menuController.eliminarComida(id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comida eliminada exitosamente.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar comida: $e')),
+      );
     }
   }
 
@@ -99,7 +173,7 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.orangeAccent,
-        onPressed: () => _mostrarFormularioAgregar(),
+        onPressed: () => _mostrarFormularioAgregar(context),
         label: const Text('Agregar'),
         icon: const Icon(Icons.add),
       ),
@@ -135,52 +209,56 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
           itemCount: productos.length,
           itemBuilder: (context, index) {
             final producto = productos[index].data() as Map<String, dynamic>;
-            return Card(
-              elevation: 6.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(15.0),
-                      ),
-                      child: Image.network(
-                        producto['imagen'] ?? 'https://via.placeholder.com/150',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0,
-                      vertical: 6.0,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          producto['Nombre'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          textAlign: TextAlign.center,
+            final id = productos[index].id;
+            return GestureDetector(
+              onLongPress: () => _mostrarOpciones(context, id, producto),
+              child: Card(
+                elevation: 6.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(15.0),
                         ),
-                        const SizedBox(height: 5),
-                        Text(
-                          '\$${producto['precio'].toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 14,
-                          ),
+                        child: Image.file(
+                          File(producto['imagen'] ?? 'assets/placeholder.png'),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0,
+                        vertical: 6.0,
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            producto['Nombre'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '\$${producto['precio'].toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -189,10 +267,46 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
     );
   }
 
-  void _mostrarFormularioAgregar() {
+  void _mostrarOpciones(
+      BuildContext context, String id, Map<String, dynamic> producto) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Editar'),
+              onTap: () {
+                Navigator.pop(context);
+                _mostrarFormularioEditar(context, id, producto);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: const Text('Eliminar'),
+              onTap: () {
+                Navigator.pop(context);
+                _eliminarComida(id);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarFormularioAgregar(BuildContext context) {
+    setState(() {
+      _nombre = '';
+      _precio = 0.0;
+      _categoria = 'Platillos';
+      _imagenFile = null; // Limpiar la imagen al abrir el formulario de agregar
+    });
+
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Agregar Comida'),
           content: Form(
@@ -259,15 +373,17 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'URL de la Imagen (opcional)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                    ),
-                    onSaved: (value) => _imagenUrl = value ?? '',
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Tomar Foto'),
                   ),
+                  const SizedBox(height: 10),
+                  if (_imagenFile != null)
+                    Image.file(
+                      _imagenFile!,
+                      height: 150,
+                    ),
                 ],
               ),
             ),
@@ -283,6 +399,119 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
                 Navigator.pop(context);
               },
               child: const Text('Agregar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarFormularioEditar(
+      BuildContext context, String id, Map<String, dynamic> producto) {
+    setState(() {
+      _nombre = producto['Nombre'];
+      _precio = producto['precio'];
+      _categoria = producto['categoria'];
+      _imagenFile = File(producto['imagen']);
+    });
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Editar Comida'),
+          content: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    initialValue: _nombre,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingresa un nombre';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _nombre = value!,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    initialValue: _precio.toString(),
+                    decoration: InputDecoration(
+                      labelText: 'Precio',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingresa un precio';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Por favor, ingresa un número válido';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _precio = double.parse(value!),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    value: _categoria,
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'Platillos', child: Text('Platillos')),
+                      DropdownMenuItem(value: 'Pollos', child: Text('Pollos')),
+                      DropdownMenuItem(
+                          value: 'Hamburguesas', child: Text('Hamburguesas')),
+                      DropdownMenuItem(
+                          value: 'Adicionales', child: Text('Adicionales')),
+                      DropdownMenuItem(
+                          value: 'Promociones', child: Text('Promociones')),
+                    ],
+                    onChanged: (value) => setState(() => _categoria = value!),
+                    decoration: InputDecoration(
+                      labelText: 'Categoría',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Tomar Foto'),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_imagenFile != null)
+                    Image.file(
+                      _imagenFile!,
+                      height: 150,
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _editarComida(id);
+                Navigator.pop(context);
+              },
+              child: const Text('Guardar'),
             ),
           ],
         );

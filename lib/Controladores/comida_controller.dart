@@ -1,21 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MenuController {
-  final CollectionReference menuCollection = FirebaseFirestore.instance.collection('menu');
+  final CollectionReference menuCollection =
+      FirebaseFirestore.instance.collection('menu');
 
   // Agregar una nueva comida al menú
   Future<void> agregarComida({
     required String nombre,
     required double precio,
     required String categoria,
-    String? imagenUrl,
+    String? imagenPath,
   }) async {
     try {
       await menuCollection.add({
         'Nombre': nombre,
         'precio': precio,
         'categoria': categoria,
-        'imagen': imagenUrl ?? 'https://via.placeholder.com/150',
+        'imagen': imagenPath ?? 'assets/placeholder.png',
       });
       print('Comida agregada exitosamente al menú.');
     } catch (e) {
@@ -26,7 +27,9 @@ class MenuController {
   // Obtener comidas por categoría
   Stream<QuerySnapshot> obtenerComidasPorCategoria(String categoria) {
     try {
-      return menuCollection.where('categoria', isEqualTo: categoria).snapshots();
+      return menuCollection
+          .where('categoria', isEqualTo: categoria)
+          .snapshots();
     } catch (e) {
       print('Error al obtener comidas: $e');
       rethrow;
@@ -39,14 +42,14 @@ class MenuController {
     required String nombre,
     required double precio,
     required String categoria,
-    String? imagenUrl,
+    String? imagenPath,
   }) async {
     try {
       await menuCollection.doc(id).update({
         'Nombre': nombre,
         'precio': precio,
         'categoria': categoria,
-        'imagen': imagenUrl ?? 'https://via.placeholder.com/150',
+        'imagen': imagenPath ?? 'assets/placeholder.png',
       });
       print('Comida actualizada exitosamente.');
     } catch (e) {
