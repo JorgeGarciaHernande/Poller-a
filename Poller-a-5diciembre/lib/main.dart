@@ -8,7 +8,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     // Inicializa Firebase
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
     // Verificar o crear la colección necesaria para las ventas diarias
     await verificarOCrearVentasDiarias();
@@ -66,10 +67,8 @@ Future<void> crearUsuariosPredeterminados() async {
         FirebaseFirestore.instance.collection('usuarios');
 
     // Crear usuario administrador si no existe
-    final QuerySnapshot adminSnapshot = await usuarios
-        .where('username', isEqualTo: 'admin')
-        .limit(1)
-        .get();
+    final QuerySnapshot adminSnapshot =
+        await usuarios.where('username', isEqualTo: 'admin').limit(1).get();
 
     if (adminSnapshot.docs.isEmpty) {
       print("Creando usuario administrador...");
@@ -84,10 +83,8 @@ Future<void> crearUsuariosPredeterminados() async {
     }
 
     // Crear usuario empleado si no existe
-    final QuerySnapshot empleadoSnapshot = await usuarios
-        .where('username', isEqualTo: 'empleado')
-        .limit(1)
-        .get();
+    final QuerySnapshot empleadoSnapshot =
+        await usuarios.where('username', isEqualTo: 'empleado').limit(1).get();
 
     if (empleadoSnapshot.docs.isEmpty) {
       print("Creando usuario empleado...");

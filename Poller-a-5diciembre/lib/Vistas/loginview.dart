@@ -138,7 +138,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _saveCredentials(String token, String usuario, String role) async {
+  Future<void> _saveCredentials(
+      String token, String usuario, String role) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
     await prefs.setString('usuario', usuario);
@@ -153,7 +154,9 @@ class _LoginPageState extends State<LoginPage> {
 
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No tienes una sesión guardada. Por favor, inicia sesión.")),
+        const SnackBar(
+            content: Text(
+                "No tienes una sesión guardada. Por favor, inicia sesión.")),
       );
       return;
     }
@@ -243,7 +246,7 @@ class _LoginPageState extends State<LoginPage> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://img3.wallspic.com/previews/9/3/9/4/1/114939/114939-lea-ceniza-hogar-x750.jpg',
+                  'https://scontent.ftam1-1.fna.fbcdn.net/v/t39.30808-6/304894260_6181916228504359_5480582647389094077_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=5Iz4iR-yDM8Q7kNvgGm4HmO&_nc_zt=23&_nc_ht=scontent.ftam1-1.fna&_nc_gid=AxYsI7eBw1x6YnFVF-wqHLL&oh=00_AYC7a6Y6o_6i9TcJV286MYd3NEWLtR6C1Z1XqOdT2YTxlA&oe=6757EB1F',
                 ),
                 fit: BoxFit.cover,
               ),
