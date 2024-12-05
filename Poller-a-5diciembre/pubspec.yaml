@@ -32,5 +32,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - images/
+# Aqui hay que revisar lo de las imagenes
+#  assets:
+#    - images/

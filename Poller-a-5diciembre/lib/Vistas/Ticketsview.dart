@@ -28,7 +28,7 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   // Método para mostrar detalles del ticket
-   void _mostrarDetalles(BuildContext context, Map<String, dynamic> ticket) {
+  void _mostrarDetalles(BuildContext context, Map<String, dynamic> ticket) {
   final DateTime? fecha = (ticket['fecha'] != null && ticket['fecha'] is Timestamp)
       ? (ticket['fecha'] as Timestamp).toDate()
       : null;
@@ -49,6 +49,7 @@ class _TicketsPageState extends State<TicketsPage> {
               Text('Método de pago: ${ticket['metodoDePago']}'),
               const SizedBox(height: 10),
               const Text('Productos Comprados:', style: TextStyle(fontWeight: FontWeight.bold)),
+              // Mostrar lista de productos usando carrito
               ...((ticket['carrito'] as List<dynamic>) ?? []).map((producto) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2.0),
@@ -60,10 +61,6 @@ class _TicketsPageState extends State<TicketsPage> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
           ElevatedButton(
             onPressed: () async {
               // Llamar al método para generar el PDF
@@ -72,8 +69,9 @@ class _TicketsPageState extends State<TicketsPage> {
                 cliente: null, // Aquí puedes añadir datos del cliente si están disponibles
                 productos: List<Map<String, dynamic>>.from(ticket['carrito'] ?? []),
                 total: double.tryParse(ticket['total'].toString()) ?? 0.0,
-                cambio: 0.0, // Agrega el cambio si lo tienes almacenado
+                cambio: 0.0, // Cambiar según el valor registrado
                 metodoDePago: ticket['metodoDePago'] ?? 'No especificado',
+                idVenta: ticket['id'], // Agregar el ID del ticket
               );
             },
             style: ElevatedButton.styleFrom(
@@ -81,11 +79,16 @@ class _TicketsPageState extends State<TicketsPage> {
             ),
             child: const Text('Generar PDF'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
         ],
       );
     },
   );
 }
+
 
   // Método para eliminar un ticket
   Future<void> _eliminarTicket(String id) async {

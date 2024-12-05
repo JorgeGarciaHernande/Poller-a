@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:polleriaproyecto/Controladores/pdf.dart';
 import '/Controladores/Ventascontrolador.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '/Controladores/clientes_controller.dart';
@@ -95,27 +96,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
     atendio: widget.atendio,
     role: widget.role,
     usuario: widget.usuario,
-    metodoDePago: metodoDePago, // Método de pago
+    metodoDePago: metodoDePago,
   );
 
-  // Obtener el ID del ticket más nuevo después de confirmar la venta
+  // Obtener el ID del ticket más nuevo
   int nuevoIdTicket = await obtenerIdTicketMasNuevo(ventas);
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Venta Registrada'),
-        content: Text('ID del ticket más nuevo: $nuevoIdTicket'),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('OK'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
+
+  // Generar y mostrar el PDF del ticket
+  await PdfGenerator.generarComprobanteDeVenta(
+    atendio: widget.atendio,
+    cliente: clienteSeleccionado,
+    productos: widget.productos,
+    total: totalPagar,
+    cambio: cambio,
+    metodoDePago: metodoDePago,
+    idVenta: nuevoIdTicket.toString(), // Convertimos el ID a string
   );
 
   // Resetear los estados
