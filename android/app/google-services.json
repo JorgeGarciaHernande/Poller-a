@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "664791263673",
+    "project_id": "polleria-639d8",
+    "storage_bucket": "polleria-639d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664791263673:android:fee72d7a5e9f99facfee68",
+        "android_client_info": {
+          "package_name": "com.example.po"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARhRUx-UKJ5D5uefdzkyxLo0qLWiix0sI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664791263673:android:b1c296456daa7909cfee68",
+        "android_client_info": {
+          "package_name": "com.example.polleriaproyecto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARhRUx-UKJ5D5uefdzkyxLo0qLWiix0sI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
