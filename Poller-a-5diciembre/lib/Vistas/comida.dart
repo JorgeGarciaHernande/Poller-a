@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-import '/Controladores/comida_controller.dart'
-    as custom_controller; // Usa un alias para evitar el conflicto de nombres
+import '/Controladores/comida_controller.dart' as custom_controller;
 
 class comida extends StatefulWidget {
   const comida({Key? key}) : super(key: key);
@@ -18,45 +13,35 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final custom_controller.MenuController _menuController =
-      custom_controller.MenuController(); // Usa el alias aquí
+      custom_controller.MenuController();
 
   late TabController _tabController;
   String _nombre = '';
   double _precio = 0.0;
   String _categoria = 'Platillos';
-  File? _imagenFile;
+  String? _imagenUrl;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this); // 5 pestañas
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   Future<void> _agregarComida() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        String? imagePath;
-        if (_imagenFile != null) {
-          final directory = await getApplicationDocumentsDirectory();
-          final dirPath = path.join(directory.path, 'assets/images');
-          await Directory(dirPath).create(recursive: true);
-          final fileName = path.basename(_imagenFile!.path);
-          final localImage = await _imagenFile!.copy('$dirPath/$fileName');
-          imagePath = localImage.path;
-        }
-
         await _menuController.agregarComida(
           nombre: _nombre,
           precio: _precio,
           categoria: _categoria,
-          imagenPath: imagePath,
+          imagenPath: _imagenUrl,
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Comida agregada exitosamente.')),
         );
         setState(() {
-          _imagenFile = null; // Limpiar la imagen después de agregar
+          _imagenUrl = null;
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -66,36 +51,16 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
-        _imagenFile = File(pickedFile.path);
-      });
-    }
-  }
-
   Future<void> _editarComida(String id) async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        String? imagePath;
-        if (_imagenFile != null) {
-          final directory = await getApplicationDocumentsDirectory();
-          final dirPath = path.join(directory.path, 'assets/images');
-          await Directory(dirPath).create(recursive: true);
-          final fileName = path.basename(_imagenFile!.path);
-          final localImage = await _imagenFile!.copy('$dirPath/$fileName');
-          imagePath = localImage.path;
-        }
-
         await _menuController.editarComida(
           id: id,
           nombre: _nombre,
           precio: _precio,
           categoria: _categoria,
-          imagenPath: imagePath,
+          imagenPath: _imagenUrl,
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Comida editada exitosamente.')),
@@ -148,7 +113,7 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
             Tab(text: 'Pollos'),
             Tab(text: 'Hamburguesas'),
             Tab(text: 'Adicionales'),
-            Tab(text: 'Promociones'), // Nueva pestaña de promociones
+            Tab(text: 'Promociones'),
           ],
         ),
       ),
@@ -167,7 +132,7 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
             _buildGridProductos('Pollos'),
             _buildGridProductos('Hamburguesas'),
             _buildGridProductos('Adicionales'),
-            _buildGridProductos('Promociones'), // Nueva vista de promociones
+            _buildGridProductos('Promociones'),
           ],
         ),
       ),
@@ -224,8 +189,8 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(15.0),
                         ),
-                        child: Image.file(
-                          File(producto['imagen'] ?? 'assets/placeholder.png'),
+                        child: Image.network(
+                          producto['imagen'] ?? 'assets/placeholder.png',
                           fit: BoxFit.cover,
                           width: double.infinity,
                         ),
@@ -301,7 +266,7 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
       _nombre = '';
       _precio = 0.0;
       _categoria = 'Platillos';
-      _imagenFile = null; // Limpiar la imagen al abrir el formulario de agregar
+      _imagenUrl = null;
     });
 
     showDialog(
@@ -373,15 +338,25 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Tomar Foto'),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'URL de la Imagen',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingresa una URL de imagen';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _imagenUrl = value!,
                   ),
                   const SizedBox(height: 10),
-                  if (_imagenFile != null)
-                    Image.file(
-                      _imagenFile!,
+                  if (_imagenUrl != null)
+                    Image.network(
+                      _imagenUrl!,
                       height: 150,
                     ),
                 ],
@@ -412,7 +387,7 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
       _nombre = producto['Nombre'];
       _precio = producto['precio'];
       _categoria = producto['categoria'];
-      _imagenFile = File(producto['imagen']);
+      _imagenUrl = producto['imagen'];
     });
 
     showDialog(
@@ -486,15 +461,26 @@ class _ComidaState extends State<comida> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Tomar Foto'),
+                  TextFormField(
+                    initialValue: _imagenUrl,
+                    decoration: InputDecoration(
+                      labelText: 'URL de la Imagen',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingresa una URL de imagen';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _imagenUrl = value!,
                   ),
                   const SizedBox(height: 10),
-                  if (_imagenFile != null)
-                    Image.file(
-                      _imagenFile!,
+                  if (_imagenUrl != null)
+                    Image.network(
+                      _imagenUrl!,
                       height: 150,
                     ),
                 ],

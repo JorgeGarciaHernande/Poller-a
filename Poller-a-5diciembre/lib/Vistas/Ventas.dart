@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:io';
 import '/Controladores/carrito_controller.dart';
 import '/Vistas/carritoview.dart';
 
@@ -26,7 +25,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this); // Incluye 5 pestañas
+    _tabController =
+        TabController(length: 5, vsync: this); // Incluye 5 pestañas
     _actualizarTotalCarrito();
   }
 
@@ -54,7 +54,7 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
       nombreProducto: producto['Nombre'],
       precioProducto: (producto['precio'] as num).toDouble(),
       cantidad: 1,
-      imagen: producto['imagen'], // Pasar la ruta de la imagen local
+      imagen: producto['imagen'], // Pasar la URL de la imagen
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -126,7 +126,9 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
                 ),
                 Tab(icon: Icon(Icons.fastfood, size: 28), text: 'Hamburguesas'),
                 Tab(icon: Icon(Icons.food_bank, size: 28), text: 'Adicionales'),
-                Tab(icon: Icon(Icons.local_offer, size: 28), text: 'Promociones'),
+                Tab(
+                    icon: Icon(Icons.local_offer, size: 28),
+                    text: 'Promociones'),
               ],
             ),
           ),
@@ -217,8 +219,8 @@ class _VentasState extends State<Ventas> with SingleTickerProviderStateMixin {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12.0),
                       ),
-                      child: Image.file(
-                        File(producto['imagen'] ?? 'assets/placeholder.png'),
+                      child: Image.network(
+                        producto['imagen'] ?? 'assets/placeholder.png',
                         fit: BoxFit.cover,
                         width: double.infinity,
                       ),
